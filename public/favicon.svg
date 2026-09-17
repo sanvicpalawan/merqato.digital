@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -40 136 136" width="136" height="136" role="img" aria-label="merQato.digital">
+  <defs>
+    <linearGradient id="merqato-red" x1="0" y1="0" x2="110" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D31027"/>
+      <stop offset="1" stop-color="#B91C1C"/>
+    </linearGradient>
+  </defs>
+  <path d="M0 0H27V8L59 56H40L17 27H0V0Z" fill="url(#merqato-red)"/>
+  <path d="M33 0H60V8L92 56H73L50 27H33V0Z" fill="url(#merqato-red)"/>
+  <path d="M66 0H93V8L117 43H124V56H105V48L83 27H66V0Z" fill="url(#merqato-red)"/>
+</svg>

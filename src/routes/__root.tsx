@@ -91,7 +91,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      // merQato "///" mark: crisp vector first, raster fallbacks for legacy
+      // browsers and iOS home-screen tiles.
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      {
+        rel: "icon",
+        type: "image/x-icon",
+        href: "/favicon.ico",
+        sizes: "16x16 32x32 48x48 256x256",
+      },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,
