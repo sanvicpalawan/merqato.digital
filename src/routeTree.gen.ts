@@ -10,33 +10,44 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicSiteAssetsSplatRouteImport } from './routes/api/public/site-assets.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSiteAssetsSplatRoute =
+  ApiPublicSiteAssetsSplatRouteImport.update({
+    id: '/api/public/site-assets/$',
+    path: '/api/public/site-assets/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/site-assets/$': typeof ApiPublicSiteAssetsSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/site-assets/$': typeof ApiPublicSiteAssetsSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/site-assets/$': typeof ApiPublicSiteAssetsSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/public/site-assets/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/public/site-assets/$'
+  id: '__root__' | '/' | '/api/public/site-assets/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicSiteAssetsSplatRoute: typeof ApiPublicSiteAssetsSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +59,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/site-assets/$': {
+      id: '/api/public/site-assets/$'
+      path: '/api/public/site-assets/$'
+      fullPath: '/api/public/site-assets/$'
+      preLoaderRoute: typeof ApiPublicSiteAssetsSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicSiteAssetsSplatRoute: ApiPublicSiteAssetsSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
