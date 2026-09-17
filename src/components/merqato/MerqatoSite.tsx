@@ -938,7 +938,7 @@ function Navigation({
 
 function MediaLayer({ src, type, alt = '', zIndex = 'z-0' }: { src?: string; type?: MediaType; alt?: string; zIndex?: string }) {
   if (!src) return null;
-  return type === 'video' ? <video className={`absolute inset-0 w-full h-full object-cover ${zIndex}`} src={src} autoPlay muted loop playsInline aria-label={alt} /> : <img className={`absolute inset-0 w-full h-full object-cover ${zIndex}`} src={src} alt={alt} />;
+  return type === 'video' ? <video className={`hero-media absolute inset-0 w-full h-full object-cover ${zIndex}`} src={src} autoPlay muted loop playsInline aria-label={alt} /> : <img className={`hero-media absolute inset-0 w-full h-full object-cover ${zIndex}`} src={src} alt={alt} />;
 }
 
 function SectionHeading({ eyebrow, title, subtitle, font }: { eyebrow: string; title: string; subtitle?: string; font: string }) {
@@ -985,7 +985,6 @@ function Hero({ settings, heroSrc }: { settings: SiteSettings; heroSrc?: string 
       </div>
       {/* Content */}
       <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {hasMedia && <div className="absolute inset-x-0 -top-10 -bottom-10 z-[-1] backdrop-blur-[2px]" />}
         <div className="inline-flex items-center gap-2 mb-8 sm:mb-10 fade-in-up max-w-full">
           <div className={`relative px-4 sm:px-5 py-2 rounded-full brand-accent-soft brand-accent-border border max-w-full ${hasMedia ? 'backdrop-blur-md bg-white/70 dark:bg-[#0B0F17]/70' : ''}`}>
             <div className="flex items-center gap-2 flex-wrap justify-center">
