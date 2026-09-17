@@ -13,6 +13,7 @@ import {
   loadCloudSettings,
   persistCloudSettings,
   removeCloudAsset,
+  setAdminPasskey,
   supabase,
   uploadCloudAsset,
 } from '@/lib/site-cloud';
@@ -1734,10 +1735,10 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
   );
 }
 
-function AuthenticationModal({ onClose, onUnlock }: { onClose: () => void; onUnlock: () => void }) {
+function AuthenticationModal({ onClose, onUnlock }: { onClose: () => void; onUnlock: (passkey: string) => void }) {
   const [passkey, setPasskey] = useState('');
   const [error, setError] = useState('');
-  const submit = (event: FormEvent) => { event.preventDefault(); if (passkey === '5309') onUnlock(); else setError('That passkey is not recognized.'); };
+  const submit = (event: FormEvent) => { event.preventDefault(); if (passkey === '5309') onUnlock(passkey); else setError('That passkey is not recognized.'); };
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/30 dark:bg-black/65 backdrop-blur-sm overflow-x-hidden">
       <form onSubmit={submit} className="w-full max-w-sm max-w-[92vw] bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 shadow-2xl rounded-2xl p-6 sm:p-7 break-words">
@@ -2697,7 +2698,7 @@ export default function MerqatoSite() {
         onAdminRequest={() => setAuthOpen(true)}
         currentLang={visitorLang}
       />
-      {authOpen && <AuthenticationModal onClose={() => setAuthOpen(false)} onUnlock={() => { setAuthOpen(false); setAdminOpen(true); }} />}
+      {authOpen && <AuthenticationModal onClose={() => setAuthOpen(false)} onUnlock={(passkey) => { setAdminPasskey(passkey); setAuthOpen(false); setAdminOpen(true); }} />}
       {adminOpen && (
         <Backoffice
           settings={settings}

@@ -1,4 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
+import { deleteSiteAsset, saveSiteSettings, uploadSiteAsset } from "@/lib/site-admin.functions";
+
+// The backoffice is unlocked with a passkey (not an email account), so admin
+// writes go through server functions that verify that passkey.
+let adminPasskey = "";
+export function setAdminPasskey(value: string) {
+  adminPasskey = value;
+}
 
 export const SITE_SETTINGS_TABLE = "site_settings";
 export const SITE_ASSET_BUCKET = "site-assets";
@@ -24,21 +32,8 @@ export async function loadCloudSettings<T>() {
 }
 
 export async function persistCloudSettings<T>(settings: T) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) return false;
-
-  const { error } = await supabase.from(SITE_SETTINGS_TABLE).upsert(
-    {
-      id: "main",
-      content: settings as never,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "id" },
-  );
-
-  if (error) throw error;
+  if (!adminPasskey) return false;
+  await saveSiteSettings({ data: { passkey: adminPasskey, content: settings } });
   return true;
 }
 
@@ -49,17 +44,26 @@ function cleanFileName(name: string) {
     .replace(/-+/g, "-");
 }
 
-export async function uploadCloudAsset(file: File) {
-  const id =
-    typeof crypto !== "undefined" && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const path = `${id}-${cleanFileName(file.name)}`;
-  const { error } = await supabase.storage
-    .from(SITE_ASSET_BUCKET)
-    .upload(path, file, { cacheControl: "3600", contentType: file.type, upsert: false });
+async function fileToBase64(file: File) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
 
-  if (error) throw error;
+export async function uploadCloudAsset(file: File) {
+  if (!adminPasskey) throw new Error("Enter the backoffice passkey again before uploading.");
+  const { path } = await uploadSiteAsset({
+    data: {
+      passkey: adminPasskey,
+      name: file.name,
+      contentType: file.type,
+      data: await fileToBase64(file),
+    },
+  });
   return `${SITE_ASSET_PREFIX}${path}`;
 }
 
@@ -72,9 +76,8 @@ export function getCloudAssetUrl(reference: string) {
 }
 
 export async function removeCloudAsset(reference: string) {
-  if (!reference.startsWith(SITE_ASSET_PREFIX)) return;
-  const { error } = await supabase.storage
-    .from(SITE_ASSET_BUCKET)
-    .remove([reference.slice(SITE_ASSET_PREFIX.length)]);
-  if (error) throw error;
+  if (!reference.startsWith(SITE_ASSET_PREFIX) || !adminPasskey) return;
+  await deleteSiteAsset({
+    data: { passkey: adminPasskey, path: reference.slice(SITE_ASSET_PREFIX.length) },
+  });
 }
