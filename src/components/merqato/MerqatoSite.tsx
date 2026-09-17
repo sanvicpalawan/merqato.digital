@@ -5,7 +5,7 @@ import {
   Globe, ImagePlus, Languages, LockKeyhole, LogIn, LogOut, Mail, MapPin, Menu,
   MessageCircle, Moon, Palette, PanelRightClose, Radio, RotateCcw, Save,
   Scale, Share2, Shield, ShieldCheck, SlidersHorizontal, Sun, Type, Upload,
-  Wifi, X,
+  Users, Wifi, X,
 } from 'lucide-react';
 import {
   getCloudAssetUrl,
@@ -17,10 +17,11 @@ import {
   supabase,
   uploadCloudAsset,
 } from '@/lib/site-cloud';
+import TeamWorkstation from './workstation/TeamWorkstation';
 
 type Theme = 'light' | 'dark';
 type MediaType = 'image' | 'video';
-type AdminTab = 'content' | 'media' | 'design' | 'packages' | 'faq' | 'footer' | 'languages';
+type AdminTab = 'content' | 'media' | 'design' | 'packages' | 'faq' | 'footer' | 'languages' | 'team';
 type CloudState = 'local' | 'connecting' | 'ready' | 'published' | 'unauthenticated' | 'error';
 type Pillar = { title: string; description: string; points: string[] };
 type ServicePackage = { name: string; price: string; priceSub: string; description: string; tag: string; features: string[]; featured: boolean };
@@ -1864,6 +1865,7 @@ function Backoffice({
     { id: 'faq', label: 'FAQ', icon: ChevronDown },
     { id: 'footer', label: 'Footer', icon: Mail },
     { id: 'languages', label: 'Languages', icon: Languages },
+    { id: 'team', label: 'Team', icon: Users },
   ];
 
   const currentLangObj = settings.localization.languages.find((l) => l.code === editLang) || settings.localization.languages[0];
@@ -1911,8 +1913,8 @@ function Backoffice({
           </div>
         </div>
 
-        {/* Responsive Tabs (4 cols on mobile, 7 on desktop) - zero horizontal scroll */}
-        <div className="grid grid-cols-4 sm:grid-cols-7 gap-1 pb-3 w-full">
+        {/* Responsive Tabs (4 cols on mobile, 8 on desktop) - zero horizontal scroll */}
+        <div className="grid grid-cols-4 sm:grid-cols-8 gap-1 pb-3 w-full">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -1939,6 +1941,7 @@ function Backoffice({
         {tab === 'faq' && <FaqEditor settings={settings} update={update} editLang={editLang} />}
         {tab === 'footer' && <FooterEditor settings={settings} update={update} editLang={editLang} />}
         {tab === 'languages' && <LanguagesEditor settings={settings} update={update} activeEditLang={editLang} onSelectEditLang={setEditLang} />}
+        {tab === 'team' && <TeamWorkstation />}
       </div>
 
       <div className="border-t border-slate-200 dark:border-white/10 px-4 sm:px-6 py-4 w-full">
