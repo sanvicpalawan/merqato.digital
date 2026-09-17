@@ -15,7 +15,7 @@ import {
   removeCloudAsset,
   supabase,
   uploadCloudAsset,
-} from './lib/supabase';
+} from '@/lib/site-cloud';
 
 type Theme = 'light' | 'dark';
 type MediaType = 'image' | 'video';
@@ -2587,7 +2587,7 @@ function LanguagesEditor({
   );
 }
 
-export default function App() {
+export default function MerqatoSite() {
   const [theme, toggleTheme] = useTheme();
   const [settings, setSettings, cloudState, publish] = useSiteSettings();
   const [adminOpen, setAdminOpen] = useState(false);
