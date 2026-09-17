@@ -638,6 +638,8 @@ body {
   z-index: 0;
   object-fit: cover;
   object-position: center;
+  filter: none;
+  transform: translateZ(0);
 }
 
 .hero-content {
