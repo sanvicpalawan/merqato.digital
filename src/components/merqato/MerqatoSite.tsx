@@ -987,7 +987,7 @@ function Hero({ settings, heroSrc }: { settings: SiteSettings; heroSrc?: string 
       {/* Content */}
       <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="inline-flex items-center gap-2 mb-8 sm:mb-10 fade-in-up max-w-full">
-          <div className={`relative px-4 sm:px-5 py-2 rounded-full brand-accent-soft brand-accent-border border max-w-full ${hasMedia ? 'backdrop-blur-md bg-white/70 dark:bg-[#0B0F17]/70' : ''}`}>
+          <div className={`relative px-4 sm:px-5 py-2 rounded-full brand-accent-soft brand-accent-border border max-w-full ${hasMedia ? 'bg-white/80 dark:bg-[#0B0F17]/70' : ''}`}>
             <div className="flex items-center gap-2 flex-wrap justify-center">
               <span className="w-1.5 h-1.5 rounded-full brand-accent-bg pulse-slow flex-shrink-0" />
               <span className="font-mono text-[0.65rem] sm:text-[0.7rem] font-medium tracking-[0.16em] sm:tracking-[0.2em] brand-accent-text uppercase break-words">{hero.badge}</span>
@@ -1001,12 +1001,12 @@ function Hero({ settings, heroSrc }: { settings: SiteSettings; heroSrc?: string 
             <span className="absolute bottom-1 left-0 right-0 h-3 brand-accent-soft -skew-x-6 z-0" />
           </span>
         </h1>
-        <p className={`max-w-2xl mx-auto brand-copy text-sm sm:text-base md:text-lg leading-relaxed mb-8 sm:mb-12 fade-in-up rounded-xl px-4 sm:px-6 py-3 break-words ${hasMedia ? 'bg-white/50 dark:bg-[#0B0F17]/50 backdrop-blur-md' : ''}`} style={{ animationDelay: '0.2s' }}>
+        <p className={`max-w-2xl mx-auto brand-copy text-sm sm:text-base md:text-lg leading-relaxed mb-8 sm:mb-12 fade-in-up rounded-xl px-4 sm:px-6 py-3 break-words ${hasMedia ? 'bg-white/75 dark:bg-[#0B0F17]/55' : ''}`} style={{ animationDelay: '0.2s' }}>
           {hero.subtitle}
         </p>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 fade-in-up w-full max-w-md sm:max-w-none mx-auto" style={{ animationDelay: '0.3s' }}>
           <a href="#packages" className="btn-primary text-white font-semibold px-6 sm:px-8 py-3.5 sm:py-4 rounded-lg inline-flex items-center justify-center gap-2 text-sm crimson-glow w-full sm:w-auto">{hero.primaryCta}<ArrowRight className="w-4 h-4 flex-shrink-0" /></a>
-          <a href="#process" className={`btn-secondary font-semibold px-6 sm:px-8 py-3.5 sm:py-4 rounded-lg inline-flex items-center justify-center gap-2 text-sm w-full sm:w-auto ${hasMedia ? 'backdrop-blur-md bg-white/70 dark:bg-white/15' : ''}`}>{hero.secondaryCta}<ChevronRight className="w-4 h-4 flex-shrink-0" /></a>
+          <a href="#process" className={`btn-secondary font-semibold px-6 sm:px-8 py-3.5 sm:py-4 rounded-lg inline-flex items-center justify-center gap-2 text-sm w-full sm:w-auto ${hasMedia ? 'bg-white/85 dark:bg-white/15' : ''}`}>{hero.secondaryCta}<ChevronRight className="w-4 h-4 flex-shrink-0" /></a>
         </div>
       </div>
     </section>

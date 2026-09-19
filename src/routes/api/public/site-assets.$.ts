@@ -11,19 +11,25 @@ export const Route = createFileRoute("/api/public/site-assets/$")({
           return new Response("Not found", { status: 404 });
         }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data, error } = await supabaseAdmin.storage.from("site-assets").download(path);
+        try {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { data, error } = await supabaseAdmin.storage.from("site-assets").download(path);
 
-        if (error || !data) {
-          return new Response("Not found", { status: 404 });
+          if (error || !data) {
+            return new Response("Not found", { status: 404 });
+          }
+
+          return new Response(data, {
+            headers: {
+              "content-type": data.type || "application/octet-stream",
+              "cache-control": "public, max-age=3600",
+            },
+          });
+        } catch (error) {
+          // Never let a media fetch crash the page; serve a plain error instead.
+          console.error("[site-assets] download failed", error);
+          return new Response("Media temporarily unavailable", { status: 503 });
         }
-
-        return new Response(data, {
-          headers: {
-            "content-type": data.type || "application/octet-stream",
-            "cache-control": "public, max-age=3600",
-          },
-        });
       },
     },
   },

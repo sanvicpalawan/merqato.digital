@@ -47,12 +47,177 @@ export type Database = {
         }
         Relationships: []
       }
+      workstation_attachments: {
+        Row: {
+          author_token: string
+          content_type: string | null
+          created_at: string
+          created_by: string
+          file_name: string
+          id: string
+          size_bytes: number | null
+          storage_path: string
+          subject_id: string
+        }
+        Insert: {
+          author_token: string
+          content_type?: string | null
+          created_at?: string
+          created_by: string
+          file_name: string
+          id?: string
+          size_bytes?: number | null
+          storage_path: string
+          subject_id: string
+        }
+        Update: {
+          author_token?: string
+          content_type?: string | null
+          created_at?: string
+          created_by?: string
+          file_name?: string
+          id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workstation_attachments_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "workstation_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workstation_entries: {
+        Row: {
+          author_token: string
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          kind: string
+          priority: string | null
+          subject_id: string
+        }
+        Insert: {
+          author_token: string
+          body: string
+          created_at?: string
+          created_by: string
+          id?: string
+          kind?: string
+          priority?: string | null
+          subject_id: string
+        }
+        Update: {
+          author_token?: string
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          kind?: string
+          priority?: string | null
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workstation_entries_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "workstation_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workstation_links: {
+        Row: {
+          author_token: string
+          created_at: string
+          created_by: string
+          id: string
+          kind: string
+          label: string | null
+          subject_id: string
+          url: string
+        }
+        Insert: {
+          author_token: string
+          created_at?: string
+          created_by: string
+          id?: string
+          kind: string
+          label?: string | null
+          subject_id: string
+          url: string
+        }
+        Update: {
+          author_token?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          subject_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workstation_links_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "workstation_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workstation_subjects: {
+        Row: {
+          author_token: string
+          category: string | null
+          cover_path: string | null
+          created_at: string
+          created_by: string
+          id: string
+          priority: string
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_token: string
+          category?: string | null
+          cover_path?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          priority?: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_token?: string
+          category?: string | null
+          cover_path?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          priority?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      workstation_author_token: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
