@@ -55,6 +55,10 @@ export type WorkstationSubject = {
   category: string;
   priority: WorkstationPriority;
   coverPath: string | null;
+  contactName: string;
+  contactPhone: string;
+  contactEmail: string;
+  contactAddress: string;
   createdBy: string;
   authorToken: string;
   createdAt: string;
@@ -225,13 +229,29 @@ async function saveLocalAsset(file: File): Promise<string> {
 }
 
 async function readLocalAssetUrl(id: string): Promise<string | undefined> {
+  const file = await readLocalAssetFile(id);
+  return file ? URL.createObjectURL(file.blob) : undefined;
+}
+
+type LocalAssetFile = { blob: Blob; name: string; type: string };
+
+async function readLocalAssetFile(id: string): Promise<LocalAssetFile | null> {
   const db = await openAssetDb();
-  return new Promise<string | undefined>((resolve, reject) => {
+  return new Promise<LocalAssetFile | null>((resolve, reject) => {
     const transaction = db.transaction(ASSET_STORE, "readonly");
     const request = transaction.objectStore(ASSET_STORE).get(id);
     request.onsuccess = () => {
       db.close();
-      resolve(request.result?.file ? URL.createObjectURL(request.result.file as Blob) : undefined);
+      const record = request.result as { file?: Blob; name?: string; type?: string } | undefined;
+      if (!record?.file) {
+        resolve(null);
+        return;
+      }
+      resolve({
+        blob: record.file,
+        name: typeof record.name === "string" ? record.name : "file",
+        type: typeof record.type === "string" ? record.type : record.file.type,
+      });
     };
     request.onerror = () => reject(request.error);
   });
@@ -302,6 +322,10 @@ function mapSubject(row: Row): WorkstationSubject {
     category: str(row.category),
     priority: (str(row.priority, "moderate") as WorkstationPriority) ?? "moderate",
     coverPath: typeof row.cover_path === "string" ? row.cover_path : null,
+    contactName: str(row.contact_name),
+    contactPhone: str(row.contact_phone),
+    contactEmail: str(row.contact_email),
+    contactAddress: str(row.contact_address),
     createdBy: str(row.created_by, "Unknown"),
     authorToken: str(row.author_token),
     createdAt: str(row.created_at, new Date().toISOString()),
@@ -452,6 +476,10 @@ export type NewSubjectInput = {
   category: string;
   priority: WorkstationPriority;
   cover?: File | null;
+  contactName?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  contactAddress?: string;
 };
 
 export async function createSubject(input: NewSubjectInput): Promise<void> {
@@ -461,6 +489,12 @@ export async function createSubject(input: NewSubjectInput): Promise<void> {
   const coverPath = input.cover ? await uploadImage(input.cover) : null;
   const now = new Date().toISOString();
   const id = uuid();
+  const contact = {
+    contactName: (input.contactName ?? "").trim().slice(0, 120),
+    contactPhone: (input.contactPhone ?? "").trim().slice(0, 40),
+    contactEmail: (input.contactEmail ?? "").trim().slice(0, 120),
+    contactAddress: (input.contactAddress ?? "").trim().slice(0, 240),
+  };
 
   if (!cloudReady()) {
     mutateLocal((snapshot) => ({
@@ -473,6 +507,7 @@ export async function createSubject(input: NewSubjectInput): Promise<void> {
           category: input.category,
           priority: input.priority,
           coverPath,
+          ...contact,
           createdBy: who.name,
           authorToken: who.token,
           createdAt: now,
@@ -493,6 +528,10 @@ export async function createSubject(input: NewSubjectInput): Promise<void> {
       category: input.category || null,
       priority: input.priority,
       cover_path: coverPath,
+      contact_name: contact.contactName || null,
+      contact_phone: contact.contactPhone || null,
+      contact_email: contact.contactEmail || null,
+      contact_address: contact.contactAddress || null,
       created_by: who.name,
       author_token: who.token,
     });
@@ -502,7 +541,18 @@ export async function createSubject(input: NewSubjectInput): Promise<void> {
 export async function updateSubject(
   id: string,
   patch: Partial<
-    Pick<WorkstationSubject, "title" | "summary" | "category" | "priority" | "coverPath">
+    Pick<
+      WorkstationSubject,
+      | "title"
+      | "summary"
+      | "category"
+      | "priority"
+      | "coverPath"
+      | "contactName"
+      | "contactPhone"
+      | "contactEmail"
+      | "contactAddress"
+    >
   >,
 ): Promise<void> {
   if (!cloudReady()) {
@@ -521,6 +571,10 @@ export async function updateSubject(
   if (patch.category !== undefined) row.category = patch.category || null;
   if (patch.priority !== undefined) row.priority = patch.priority;
   if (patch.coverPath !== undefined) row.cover_path = patch.coverPath;
+  if (patch.contactName !== undefined) row.contact_name = patch.contactName || null;
+  if (patch.contactPhone !== undefined) row.contact_phone = patch.contactPhone || null;
+  if (patch.contactEmail !== undefined) row.contact_email = patch.contactEmail || null;
+  if (patch.contactAddress !== undefined) row.contact_address = patch.contactAddress || null;
 
   const { error } = await requireClient().from("workstation_subjects").update(row).eq("id", id);
   if (error) throw new Error(error.message);
@@ -746,6 +800,144 @@ export async function deleteAttachment(id: string, storagePath: string): Promise
   if (error) throw new Error(error.message);
   // Best effort: the row is gone either way, so don't fail the UI on storage.
   await client.storage.from(WORKSTATION_BUCKET).remove([storagePath]);
+}
+
+/* ───────────────────── local → cloud rescue ─────────────────────
+ *
+ * When the board ran in "this browser" mode (before the Supabase
+ * migration was applied, or before the hosting build had its env
+ * vars), posts lived in this browser's localStorage + IndexedDB.
+ * Once the team cloud is reachable those posts stop showing — they
+ * are NOT deleted, just stranded. These helpers count them and move
+ * them to the shared board on one tap. Safe to re-run: rows keep
+ * their ids, so already-moved rows are skipped, not duplicated.
+ */
+
+export type RescueCounts = {
+  subjects: number;
+  entries: number;
+  links: number;
+  attachments: number;
+};
+
+/** How many posts are stranded in this browser (0 when already on cloud-only). */
+export function getLocalRescueCounts(): RescueCounts {
+  const local = readLocal();
+  return {
+    subjects: local.subjects.length,
+    entries: local.entries.length,
+    links: local.links.length,
+    attachments: local.attachments.length,
+  };
+}
+
+export function rescueTotal(counts: RescueCounts): number {
+  return counts.subjects + counts.entries + counts.links + counts.attachments;
+}
+
+function isAlreadyMoved(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  // PostgREST unique-violation on the reused id.
+  return /duplicate|already exists|23505|409/i.test(message);
+}
+
+async function reuploadLocalFile(storagePath: string): Promise<string | null> {
+  if (!storagePath.startsWith(LOCAL_PREFIX)) return storagePath;
+  const asset = await readLocalAssetFile(storagePath.slice(LOCAL_PREFIX.length));
+  if (!asset) return null;
+  const file =
+    asset.blob instanceof File
+      ? asset.blob
+      : new File([asset.blob], asset.name, { type: asset.type || "application/octet-stream" });
+  return uploadMedia(file);
+}
+
+/**
+ * Move every stranded local post to the team cloud, preserving authors,
+ * timestamps and subject links. Attachments whose device file is gone
+ * are skipped (their text posts still move).
+ */
+export async function migrateLocalToCloud(): Promise<RescueCounts> {
+  const who = author();
+  void who;
+  const client = requireClient();
+  const local = readLocal();
+  const moved: RescueCounts = { subjects: 0, entries: 0, links: 0, attachments: 0 };
+
+  for (const subject of local.subjects) {
+    const coverPath = subject.coverPath
+      ? await reuploadLocalFile(subject.coverPath).catch(() => null)
+      : null;
+    const { error } = await client.from("workstation_subjects").insert({
+      id: subject.id,
+      title: subject.title,
+      summary: subject.summary || null,
+      category: subject.category || null,
+      priority: subject.priority,
+      cover_path: coverPath,
+      contact_name: subject.contactName || null,
+      contact_phone: subject.contactPhone || null,
+      contact_email: subject.contactEmail || null,
+      contact_address: subject.contactAddress || null,
+      created_by: subject.createdBy,
+      author_token: subject.authorToken,
+    });
+    if (error && !isAlreadyMoved(error)) throw new Error(error.message);
+    if (!error) moved.subjects += 1;
+  }
+
+  for (const entry of local.entries) {
+    const { error } = await client.from("workstation_entries").insert({
+      id: entry.id,
+      subject_id: entry.subjectId,
+      kind: entry.kind,
+      body: entry.body,
+      priority: entry.priority,
+      created_by: entry.createdBy,
+      author_token: entry.authorToken,
+    });
+    if (error && !isAlreadyMoved(error)) throw new Error(error.message);
+    if (!error) moved.entries += 1;
+  }
+
+  for (const link of local.links) {
+    const { error } = await client.from("workstation_links").insert({
+      id: link.id,
+      subject_id: link.subjectId,
+      kind: link.kind,
+      url: link.url,
+      label: link.label || null,
+      created_by: link.createdBy,
+      author_token: link.authorToken,
+    });
+    if (error && !isAlreadyMoved(error)) throw new Error(error.message);
+    if (!error) moved.links += 1;
+  }
+
+  for (const attachment of local.attachments) {
+    const storagePath = await reuploadLocalFile(attachment.storagePath).catch(() => null);
+    if (!storagePath) continue;
+    const { error } = await client.from("workstation_attachments").insert({
+      id: attachment.id,
+      subject_id: attachment.subjectId,
+      storage_path: storagePath,
+      file_name: attachment.fileName,
+      content_type: attachment.contentType,
+      size_bytes: attachment.sizeBytes,
+      created_by: attachment.createdBy,
+      author_token: attachment.authorToken,
+    });
+    if (error && !isAlreadyMoved(error)) throw new Error(error.message);
+    if (!error) moved.attachments += 1;
+  }
+
+  // Board is now shared: drop the stranded local copy so it can't resurface.
+  try {
+    localStorage.removeItem(WORKSTATION_STORAGE_KEY);
+  } catch {
+    /* storage unavailable — harmless */
+  }
+  return moved;
 }
 
 /* ───────────────────── formatting helpers ───────────────────── */

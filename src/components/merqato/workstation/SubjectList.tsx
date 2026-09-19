@@ -86,6 +86,10 @@ export default function SubjectList({
   const [category, setCategory] = useState(SUBJECT_CATEGORIES[0]);
   const [priority, setPriority] = useState<WorkstationPriority>("moderate");
   const [cover, setCover] = useState<File | null>(null);
+  const [contactName, setContactName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactAddress, setContactAddress] = useState("");
   const [localError, setLocalError] = useState("");
   const coverInput = useRef<HTMLInputElement>(null);
 
@@ -138,6 +142,10 @@ export default function SubjectList({
     setCategory(SUBJECT_CATEGORIES[0]);
     setPriority("moderate");
     setCover(null);
+    setContactName("");
+    setContactPhone("");
+    setContactEmail("");
+    setContactAddress("");
     setLocalError("");
   };
 
@@ -147,7 +155,17 @@ export default function SubjectList({
       return;
     }
     setLocalError("");
-    await onCreate({ title, summary, category, priority, cover });
+    await onCreate({
+      title,
+      summary,
+      category,
+      priority,
+      cover,
+      contactName,
+      contactPhone,
+      contactEmail,
+      contactAddress,
+    });
     resetForm();
     setShowForm(false);
   };
@@ -246,6 +264,35 @@ export default function SubjectList({
               rows={3}
               placeholder="What the team should know or learn from this subject."
             />
+            <div>
+              <span className="admin-label">Client contact (optional)</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field
+                  label="Contact person"
+                  value={contactName}
+                  onChange={setContactName}
+                  placeholder="Jaycee"
+                />
+                <Field
+                  label="Phone"
+                  value={contactPhone}
+                  onChange={setContactPhone}
+                  placeholder="+63 9…"
+                />
+                <Field
+                  label="Email"
+                  value={contactEmail}
+                  onChange={setContactEmail}
+                  placeholder="client@example.com"
+                />
+                <Field
+                  label="Address"
+                  value={contactAddress}
+                  onChange={setContactAddress}
+                  placeholder="Street, town, island…"
+                />
+              </div>
+            </div>
             <div>
               <span className="admin-label">Cover image or video (optional)</span>
               <button

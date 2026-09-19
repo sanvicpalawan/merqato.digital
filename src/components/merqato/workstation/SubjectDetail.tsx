@@ -6,10 +6,15 @@ import {
   HardDrive,
   ImagePlus,
   Link2,
+  Mail,
+  MapPin,
   MessageSquare,
+  Pencil,
+  Phone,
   Send,
   StickyNote,
   Trash2,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -48,6 +53,7 @@ export default function SubjectDetail({
   onPriority,
   onDeleteSubject,
   onCover,
+  onUpdateSubject,
   onAddEntry,
   onDeleteEntry,
   onAddLink,
@@ -68,6 +74,12 @@ export default function SubjectDetail({
   onPriority: (priority: WorkstationPriority) => Promise<void>;
   onDeleteSubject: () => Promise<void>;
   onCover: (file: File) => Promise<void>;
+  onUpdateSubject: (patch: {
+    contactName?: string;
+    contactPhone?: string;
+    contactEmail?: string;
+    contactAddress?: string;
+  }) => Promise<void>;
   onAddEntry: (
     kind: "comment" | "note",
     body: string,
@@ -89,6 +101,11 @@ export default function SubjectDetail({
   const [bulkUrls, setBulkUrls] = useState("");
   const [bulkDriveUrls, setBulkDriveUrls] = useState("");
   const [bulkLabel, setBulkLabel] = useState("");
+  const [editingContact, setEditingContact] = useState(false);
+  const [cName, setCName] = useState("");
+  const [cPhone, setCPhone] = useState("");
+  const [cEmail, setCEmail] = useState("");
+  const [cAddress, setCAddress] = useState("");
   const [copied, setCopied] = useState("");
   const coverInput = useRef<HTMLInputElement>(null);
   const imageInput = useRef<HTMLInputElement>(null);
@@ -102,6 +119,27 @@ export default function SubjectDetail({
   const webLinks = links.filter((link) => link.kind === "url");
   const coverUrl = subject.coverPath ? attachmentUrls[subject.coverPath] : undefined;
   const isOwner = subject.authorToken === myToken;
+  const hasContact = Boolean(
+    subject.contactName || subject.contactPhone || subject.contactEmail || subject.contactAddress,
+  );
+
+  const openContactEdit = () => {
+    setCName(subject.contactName);
+    setCPhone(subject.contactPhone);
+    setCEmail(subject.contactEmail);
+    setCAddress(subject.contactAddress);
+    setEditingContact(true);
+  };
+
+  const saveContact = async () => {
+    await onUpdateSubject({
+      contactName: cName.trim(),
+      contactPhone: cPhone.trim(),
+      contactEmail: cEmail.trim(),
+      contactAddress: cAddress.trim(),
+    });
+    setEditingContact(false);
+  };
 
   const copy = async (url: string, id: string) => {
     try {
@@ -221,6 +259,158 @@ export default function SubjectDetail({
             className="w-full h-36 object-cover rounded-2xl border border-slate-200 dark:border-white/10"
           />
         ))}
+
+      {/* ── Client contact ──────────────────────────────── */}
+      {(hasContact || canPost) && (
+        <SectionCard
+          title="Client contact"
+          icon={User}
+          hint="Who to call and where to reach them. Tap to call or email — one click, no digging."
+        >
+          {editingContact ? (
+            <div className="space-y-2">
+              <Field
+                label="Contact person"
+                value={cName}
+                onChange={setCName}
+                placeholder="Jaycee"
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Field label="Phone" value={cPhone} onChange={setCPhone} placeholder="+63 9…" />
+                <Field
+                  label="Email"
+                  value={cEmail}
+                  onChange={setCEmail}
+                  placeholder="client@example.com"
+                />
+              </div>
+              <Field
+                label="Address"
+                value={cAddress}
+                onChange={setCAddress}
+                placeholder="Street, town, island…"
+              />
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void saveContact()}
+                  className="btn-primary text-white px-4 py-2 rounded-lg text-[11px] font-semibold disabled:opacity-50"
+                >
+                  Save contact
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingContact(false)}
+                  className="px-3 py-2 rounded-lg text-[11px] font-semibold text-slate-500 dark:text-white/60 hover:bg-slate-100 dark:hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : hasContact ? (
+            <ul className="space-y-1.5">
+              {subject.contactName && (
+                <li className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5">
+                  <User className="w-4 h-4 brand-accent-text flex-shrink-0" />
+                  <span className="text-xs font-semibold brand-heading flex-1 min-w-0 truncate">
+                    {subject.contactName}
+                  </span>
+                  <IconButton
+                    label="Copy contact name"
+                    onClick={() => void copy(subject.contactName, "cname")}
+                  >
+                    {copied === "cname" ? (
+                      <span className="text-[9px] font-bold">OK</span>
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </IconButton>
+                </li>
+              )}
+              {subject.contactPhone && (
+                <li className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5">
+                  <Phone className="w-4 h-4 brand-accent-text flex-shrink-0" />
+                  <a
+                    href={`tel:${subject.contactPhone.replace(/[^+\d]/g, "")}`}
+                    className="text-xs font-semibold brand-heading flex-1 min-w-0 truncate hover:brand-accent-text"
+                  >
+                    {subject.contactPhone}
+                  </a>
+                  <IconButton
+                    label="Copy phone"
+                    onClick={() => void copy(subject.contactPhone, "cphone")}
+                  >
+                    {copied === "cphone" ? (
+                      <span className="text-[9px] font-bold">OK</span>
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </IconButton>
+                </li>
+              )}
+              {subject.contactEmail && (
+                <li className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5">
+                  <Mail className="w-4 h-4 brand-accent-text flex-shrink-0" />
+                  <a
+                    href={`mailto:${subject.contactEmail}`}
+                    className="text-xs font-semibold brand-heading flex-1 min-w-0 truncate hover:brand-accent-text"
+                  >
+                    {subject.contactEmail}
+                  </a>
+                  <IconButton
+                    label="Copy email"
+                    onClick={() => void copy(subject.contactEmail, "cemail")}
+                  >
+                    {copied === "cemail" ? (
+                      <span className="text-[9px] font-bold">OK</span>
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </IconButton>
+                </li>
+              )}
+              {subject.contactAddress && (
+                <li className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5">
+                  <MapPin className="w-4 h-4 brand-accent-text flex-shrink-0" />
+                  <span className="text-xs font-semibold brand-heading flex-1 min-w-0 break-words">
+                    {subject.contactAddress}
+                  </span>
+                  <IconButton
+                    label="Copy address"
+                    onClick={() => void copy(subject.contactAddress, "caddr")}
+                  >
+                    {copied === "caddr" ? (
+                      <span className="text-[9px] font-bold">OK</span>
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </IconButton>
+                </li>
+              )}
+              {canPost && (
+                <button
+                  type="button"
+                  onClick={openContactEdit}
+                  className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-[11px] font-semibold brand-copy inline-flex items-center justify-center gap-1.5 hover:border-[var(--crimson)]"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Edit contact
+                </button>
+              )}
+            </ul>
+          ) : (
+            <button
+              type="button"
+              onClick={openContactEdit}
+              className="w-full px-3 py-3 rounded-xl border border-dashed border-slate-300 dark:border-white/15 text-xs brand-copy inline-flex items-center justify-center gap-2 hover:border-[var(--crimson)]"
+            >
+              <User className="w-4 h-4 brand-accent-text" />
+              Add client contact — person, phone, email, address
+            </button>
+          )}
+        </SectionCard>
+      )}
 
       {/* ── Notes ─────────────────────────────────────────── */}
       <SectionCard

@@ -14,10 +14,14 @@ import {
   deleteEntry,
   deleteLink,
   deleteSubject,
+  getLocalRescueCounts,
   loadWorkstation,
+  migrateLocalToCloud,
   replaceSubjectCover,
+  rescueTotal,
   updateSubject,
   type NewSubjectInput,
+  type RescueCounts,
   type WorkstationAttachment,
   type WorkstationPriority,
   type WorkstationSnapshot,
@@ -37,6 +41,9 @@ export default function TeamWorkstation() {
   const [error, setError] = useState("");
   const [name, setName] = useState(() => getAuthorName());
   const [openId, setOpenId] = useState<string | null>(null);
+  const [rescue, setRescue] = useState<RescueCounts | null>(null);
+  const [rescuing, setRescuing] = useState(false);
+  const [rescueDone, setRescueDone] = useState("");
   const blobUrls = useRef<string[]>([]);
 
   const reload = useCallback(async () => {
@@ -44,6 +51,12 @@ export default function TeamWorkstation() {
     blobUrls.current.forEach((url) => URL.revokeObjectURL(url));
     blobUrls.current = data.source === "local" ? Object.values(data.attachmentUrls) : [];
     setSnapshot(data);
+    // Stranded posts? They live in this browser only while the team is on cloud.
+    try {
+      setRescue(data.source === "cloud" ? getLocalRescueCounts() : null);
+    } catch {
+      setRescue(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -164,6 +177,52 @@ export default function TeamWorkstation() {
 
       {error && <Notice>{error}</Notice>}
 
+      {rescueDone && <Notice tone="info">{rescueDone}</Notice>}
+
+      {!loading && rescue && rescueTotal(rescue) > 0 && (
+        <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3.5">
+          <p className="text-xs font-bold brand-heading">
+            This browser holds posts that never reached the team cloud
+          </p>
+          <p className="brand-copy text-[11px] leading-relaxed mt-1">
+            {rescue.subjects} subject{rescue.subjects === 1 ? "" : "s"} · {rescue.entries} note
+            {rescue.entries === 1 ? "" : "s"}/comment{rescue.entries === 1 ? "" : "s"} ·{" "}
+            {rescue.links} link{rescue.links === 1 ? "" : "s"} · {rescue.attachments} file
+            {rescue.attachments === 1 ? "" : "s"} — saved here while the shared board was
+            unreachable. Move them once and everyone sees them.
+          </p>
+          <button
+            type="button"
+            disabled={rescuing || busy || !hasAuthorName()}
+            onClick={() => {
+              setRescuing(true);
+              setError("");
+              migrateLocalToCloud()
+                .then(async (moved) => {
+                  const total = rescueTotal(moved);
+                  setRescue(null);
+                  setRescueDone(
+                    total > 0
+                      ? `Moved ${total} post${total === 1 ? "" : "s"} to the team cloud — nothing is stranded in this browser anymore.`
+                      : "Those posts were already on the team cloud — nothing left behind here.",
+                  );
+                  await reload();
+                })
+                .catch((err: unknown) => setError(message(err)))
+                .finally(() => setRescuing(false));
+            }}
+            className="btn-primary text-white px-4 py-2.5 rounded-lg text-xs font-semibold disabled:opacity-50 mt-2.5"
+          >
+            {rescuing ? "Moving…" : "Move to team cloud"}
+          </button>
+          {!hasAuthorName() && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1.5">
+              Add your display name above first — the move stamps posts with it.
+            </p>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-2.5">
           {[0, 1, 2].map((row) => (
@@ -196,6 +255,7 @@ export default function TeamWorkstation() {
             });
           }}
           onCover={(file) => run(() => replaceSubjectCover(subject.id, file))}
+          onUpdateSubject={(patch) => run(() => updateSubject(subject.id, patch))}
           onAddEntry={(kind, body, priority) =>
             run(() => addEntry({ subjectId: subject.id, kind, body, priority }))
           }
