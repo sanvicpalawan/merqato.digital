@@ -7,6 +7,7 @@ import {
   addAttachments,
   addEntry,
   addLink,
+  addLinksBulk,
   canPost as hasAuthorName,
   createSubject,
   deleteAttachment,
@@ -201,6 +202,11 @@ export default function TeamWorkstation() {
           onDeleteEntry={(id) => run(() => deleteEntry(id))}
           onAddLink={(kind, url, label) =>
             run(() => addLink({ subjectId: subject.id, kind, url, label }))
+          }
+          onAddLinksBulk={(kind, urls, label) =>
+            run(() =>
+              addLinksBulk({ subjectId: subject.id, kind, urls, label }).then(() => undefined),
+            )
           }
           onDeleteLink={(id) => run(() => deleteLink(id))}
           onUpload={(files) => run(() => addAttachments(subject.id, files))}

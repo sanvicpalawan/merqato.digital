@@ -14,6 +14,9 @@ import {
 import { cn } from "@/lib/utils";
 import {
   formatBytes,
+  isVideoAttachment,
+  MAX_ENTRY_CHARS,
+  parseUrlsBulk,
   type WorkstationAttachment,
   type WorkstationEntry,
   type WorkstationLink,
@@ -48,6 +51,7 @@ export default function SubjectDetail({
   onAddEntry,
   onDeleteEntry,
   onAddLink,
+  onAddLinksBulk,
   onDeleteLink,
   onUpload,
   onDeleteAttachment,
@@ -71,6 +75,7 @@ export default function SubjectDetail({
   ) => Promise<void>;
   onDeleteEntry: (id: string) => Promise<void>;
   onAddLink: (kind: "url" | "drive", url: string, label: string) => Promise<void>;
+  onAddLinksBulk: (kind: "url" | "drive", urls: string[], label: string) => Promise<void>;
   onDeleteLink: (id: string) => Promise<void>;
   onUpload: (files: File[]) => Promise<void>;
   onDeleteAttachment: (attachment: WorkstationAttachment) => Promise<void>;
@@ -81,6 +86,9 @@ export default function SubjectDetail({
   const [linkKind, setLinkKind] = useState<"url" | "drive">("url");
   const [linkUrl, setLinkUrl] = useState("");
   const [linkLabel, setLinkLabel] = useState("");
+  const [bulkUrls, setBulkUrls] = useState("");
+  const [bulkDriveUrls, setBulkDriveUrls] = useState("");
+  const [bulkLabel, setBulkLabel] = useState("");
   const [copied, setCopied] = useState("");
   const coverInput = useRef<HTMLInputElement>(null);
   const imageInput = useRef<HTMLInputElement>(null);
@@ -118,6 +126,15 @@ export default function SubjectDetail({
     await onAddLink(linkKind, linkUrl, linkLabel);
     setLinkUrl("");
     setLinkLabel("");
+  };
+
+  const submitBulk = async (kind: "url" | "drive") => {
+    const text = kind === "drive" ? bulkDriveUrls : bulkUrls;
+    const urls = parseUrlsBulk(text);
+    if (urls.length === 0) return;
+    await onAddLinksBulk(kind, urls, bulkLabel);
+    if (kind === "drive") setBulkDriveUrls("");
+    else setBulkUrls("");
   };
 
   return (
@@ -202,17 +219,17 @@ export default function SubjectDetail({
         title="Notes"
         icon={StickyNote}
         count={notes.length}
-        hint="Reference material for this subject. Tag it so the team knows how loudly it should ping them."
+        hint="Full workstation notes — long-form reference material. 20,000 chars, multi-line, saved to the team cloud."
       >
         <div className="space-y-3">
           {canPost && (
             <div className="space-y-2">
               <Area
-                label="New note"
+                label={`New note (${noteBody.length.toLocaleString()} / ${MAX_ENTRY_CHARS.toLocaleString()})`}
                 value={noteBody}
-                onChange={setNoteBody}
-                rows={3}
-                placeholder="What should the team know?"
+                onChange={(value) => setNoteBody(value.slice(0, MAX_ENTRY_CHARS))}
+                rows={8}
+                placeholder="Write the full brief here — steps, context, decisions, follow-ups… (multi-line, big writing space)"
               />
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <PriorityPicker value={notePriority} onChange={setNotePriority} />
@@ -267,9 +284,9 @@ export default function SubjectDetail({
         title="Reference links"
         icon={Link2}
         count={links.length}
-        hint="Drop plain URLs or Google Drive links. Label them so the team knows what they open."
+        hint="Save one link or paste many at once. Web URLs and Google Drive URLs each get their own bulk box — all saved."
       >
-        <div className="space-y-3">
+        <div className="space-y-4">
           {canPost && (
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-1.5">
@@ -322,6 +339,56 @@ export default function SubjectDetail({
                 >
                   Add
                 </button>
+              </div>
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/15 p-3 space-y-2">
+                <Area
+                  label={`Bulk web URLs (${parseUrlsBulk(bulkUrls).length} detected — one per line)`}
+                  value={bulkUrls}
+                  onChange={setBulkUrls}
+                  rows={4}
+                  placeholder={
+                    "https://example.com/guide\nhttps://example.com/video\n…paste as many as needed"
+                  }
+                />
+                <button
+                  type="button"
+                  disabled={busy || parseUrlsBulk(bulkUrls).length === 0}
+                  onClick={() => void submitBulk("url")}
+                  className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 text-[11px] font-semibold brand-heading hover:border-[var(--crimson)] disabled:opacity-50"
+                >
+                  Save {parseUrlsBulk(bulkUrls).length} web link
+                  {parseUrlsBulk(bulkUrls).length === 1 ? "" : "s"}
+                </button>
+              </div>
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/15 p-3 space-y-2">
+                <Area
+                  label={`Bulk Google Drive URLs (${parseUrlsBulk(bulkDriveUrls).length} detected)`}
+                  value={bulkDriveUrls}
+                  onChange={setBulkDriveUrls}
+                  rows={4}
+                  placeholder={
+                    "https://drive.google.com/file/d/...\nhttps://docs.google.com/document/d/...\n…paste as many Drive links as needed"
+                  }
+                />
+                <div className="flex items-end gap-2">
+                  <div className="flex-1 min-w-0">
+                    <Field
+                      label="Label for all (optional)"
+                      value={bulkLabel}
+                      onChange={setBulkLabel}
+                      placeholder="Sprint assets"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={busy || parseUrlsBulk(bulkDriveUrls).length === 0}
+                    onClick={() => void submitBulk("drive")}
+                    className="px-3.5 py-2.5 rounded-lg btn-primary text-white text-[11px] font-semibold disabled:opacity-50 flex-shrink-0"
+                  >
+                    Save {parseUrlsBulk(bulkDriveUrls).length} Drive link
+                    {parseUrlsBulk(bulkDriveUrls).length === 1 ? "" : "s"}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -408,12 +475,12 @@ export default function SubjectDetail({
         </div>
       </SectionCard>
 
-      {/* ── Images ────────────────────────────────────────── */}
+      {/* ── Images & video ──────────────────────────────── */}
       <SectionCard
-        title="Images from device"
+        title="Images & video from device"
         icon={ImagePlus}
         count={attachments.length}
-        hint="Screenshots, diagrams and references. Up to 10 MB per image."
+        hint="Multiple images + video from this device. Images up to 10 MB, video up to 100 MB — all saved to the team cloud."
       >
         <div className="space-y-3">
           {canPost && (
@@ -424,12 +491,12 @@ export default function SubjectDetail({
                 className="asset-dropzone w-full rounded-xl px-3 py-5 text-xs brand-copy inline-flex items-center justify-center gap-2"
               >
                 <ImagePlus className="w-4 h-4 brand-accent-text" />
-                Choose images to upload
+                Choose images / videos to upload (multiple)
               </button>
               <input
                 ref={imageInput}
                 type="file"
-                accept="image/*"
+                accept="image/*,video/*,.mov,.m4v,.avi,.mp4,.webm"
                 multiple
                 className="hidden"
                 onChange={(event) => {
@@ -441,24 +508,34 @@ export default function SubjectDetail({
             </>
           )}
           {attachments.length === 0 ? (
-            <EmptyHint>No images uploaded yet.</EmptyHint>
+            <EmptyHint>No images or videos uploaded yet.</EmptyHint>
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {attachments.map((attachment) => {
                 const url = attachmentUrls[attachment.storagePath];
+                const isVideo = isVideoAttachment(attachment.contentType, attachment.fileName);
                 return (
                   <figure
                     key={attachment.id}
                     className="rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/[0.03]"
                   >
                     {url ? (
-                      <a href={url} target="_blank" rel="noreferrer noopener">
-                        <img
+                      isVideo ? (
+                        <video
                           src={url}
-                          alt={attachment.fileName}
-                          className="w-full h-28 object-cover"
+                          controls
+                          preload="metadata"
+                          className="w-full h-36 object-cover bg-black"
                         />
-                      </a>
+                      ) : (
+                        <a href={url} target="_blank" rel="noreferrer noopener">
+                          <img
+                            src={url}
+                            alt={attachment.fileName}
+                            className="w-full h-28 object-cover"
+                          />
+                        </a>
+                      )
                     ) : (
                       <div className="w-full h-28 flex items-center justify-center text-[11px] brand-copy">
                         Preview unavailable
@@ -469,6 +546,7 @@ export default function SubjectDetail({
                         className="text-[11px] font-semibold brand-heading truncate"
                         title={attachment.fileName}
                       >
+                        {isVideo ? "🎬 " : ""}
                         {attachment.fileName}
                       </p>
                       <div className="flex items-center justify-between gap-1 mt-0.5">
@@ -478,7 +556,7 @@ export default function SubjectDetail({
                         </span>
                         {attachment.authorToken === myToken && (
                           <IconButton
-                            label="Delete image"
+                            label={isVideo ? "Delete video" : "Delete image"}
                             tone="danger"
                             disabled={busy}
                             onClick={() => void onDeleteAttachment(attachment)}
@@ -537,11 +615,11 @@ export default function SubjectDetail({
           {canPost && (
             <div className="space-y-2">
               <Area
-                label="Add a comment"
+                label={`Add a comment (${comment.length.toLocaleString()} / ${MAX_ENTRY_CHARS.toLocaleString()})`}
                 value={comment}
-                onChange={setComment}
-                rows={2}
-                placeholder="Ask a question or leave an update…"
+                onChange={(value) => setComment(value.slice(0, MAX_ENTRY_CHARS))}
+                rows={4}
+                placeholder="Ask a question or leave an update… (multi-line, all saved)"
               />
               <button
                 type="button"

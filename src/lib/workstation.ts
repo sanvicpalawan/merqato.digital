@@ -20,6 +20,9 @@ let cloudUnavailable = false;
 export const WORKSTATION_BUCKET = "workstation-assets";
 export const WORKSTATION_STORAGE_KEY = "merqato-team-workstation-v1";
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+/** Max chars for a note/comment — matches migration 20260919090000 (20k). */
+export const MAX_ENTRY_CHARS = 20000;
 
 const ASSET_DB = "merqato-workstation-assets";
 const ASSET_STORE = "files";
@@ -130,8 +133,46 @@ function cleanFileName(name: string): string {
 }
 
 function assertImage(file: File) {
-  if (!file.type.startsWith("image/")) throw new Error(`"${file.name}" is not an image.`);
-  if (file.size > MAX_IMAGE_BYTES) throw new Error(`"${file.name}" is larger than 10 MB.`);
+  assertMedia(file);
+}
+
+function isVideoFile(file: File): boolean {
+  return (
+    file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v|mpeg|mpg|ogv|avi)$/i.test(file.name)
+  );
+}
+
+function assertMedia(file: File) {
+  if (file.type.startsWith("image/")) {
+    if (file.size > MAX_IMAGE_BYTES) throw new Error(`"${file.name}" is larger than 10 MB.`);
+    return;
+  }
+  if (file.type.startsWith("video/") || isVideoFile(file)) {
+    if (file.size > MAX_VIDEO_BYTES) throw new Error(`"${file.name}" is larger than 100 MB.`);
+    return;
+  }
+  throw new Error(`"${file.name}" is not an image or video.`);
+}
+
+export function isVideoAttachment(contentType: string, fileName: string): boolean {
+  return (
+    contentType.startsWith("video/") || /\.(mp4|webm|mov|m4v|mpeg|mpg|ogv|avi)$/i.test(fileName)
+  );
+}
+
+/** Split pasted text into clean URLs — one per line, comma or space separated. */
+export function parseUrlsBulk(text: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const chunk of text.split(/[\s,;]+/)) {
+    const url = chunk.trim().replace(/^["'<(]+|["'>),\].]+$/g, "");
+    if (!url || url.length < 4) continue;
+    const key = url.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(url);
+  }
+  return out.slice(0, 50);
 }
 
 function author() {
@@ -383,7 +424,11 @@ export async function loadWorkstation(): Promise<WorkstationSnapshot> {
 /* ───────────────────── writes ───────────────────── */
 
 async function uploadImage(file: File): Promise<string> {
-  assertImage(file);
+  return uploadMedia(file);
+}
+
+async function uploadMedia(file: File): Promise<string> {
+  assertMedia(file);
   const { token } = author();
   const fileName = `${uuid()}-${cleanFileName(file.name)}`;
 
@@ -509,6 +554,8 @@ export async function addEntry(input: {
 }): Promise<void> {
   const body = input.body.trim();
   if (!body) throw new Error("Write something first.");
+  if (body.length > MAX_ENTRY_CHARS)
+    throw new Error(`Keep it under ${MAX_ENTRY_CHARS.toLocaleString()} characters.`);
   const who = author();
   const id = uuid();
   const now = new Date().toISOString();
@@ -618,11 +665,33 @@ export async function deleteLink(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/** Save many URLs / Drive URLs at once — one row per URL, all stamped. */
+export async function addLinksBulk(input: {
+  subjectId: string;
+  kind: "url" | "drive";
+  urls: string[];
+  label?: string;
+}): Promise<{ saved: number }> {
+  const cleaned = parseUrlsBulk(input.urls.join("\n"));
+  if (cleaned.length === 0) throw new Error("Paste at least one link first.");
+  let saved = 0;
+  for (const url of cleaned) {
+    await addLink({
+      subjectId: input.subjectId,
+      kind: input.kind,
+      url,
+      label: input.label ?? "",
+    });
+    saved += 1;
+  }
+  return { saved };
+}
+
 export async function addAttachments(subjectId: string, files: File[]): Promise<void> {
   const who = author();
   for (const file of files) {
-    assertImage(file);
-    const storagePath = await uploadImage(file);
+    assertMedia(file);
+    const storagePath = await uploadMedia(file);
     const id = uuid();
     const now = new Date().toISOString();
 
