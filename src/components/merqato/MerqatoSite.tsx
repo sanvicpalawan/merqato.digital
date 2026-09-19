@@ -987,7 +987,7 @@ function Hero({ settings, heroSrc }: { settings: SiteSettings; heroSrc?: string 
       {/* Content */}
       <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="inline-flex items-center gap-2 mb-8 sm:mb-10 fade-in-up max-w-full">
-          <div className={`relative px-4 sm:px-5 py-2 rounded-full brand-accent-soft brand-accent-border border max-w-full ${hasMedia ? 'backdrop-blur-md bg-white/70 dark:bg-[#0B0F17]/70' : ''}`}>
+          <div className={`relative px-4 sm:px-5 py-2 rounded-full brand-accent-soft brand-accent-border border max-w-full ${hasMedia ? 'bg-white/80 dark:bg-[#0B0F17]/70' : ''}`}>
             <div className="flex items-center gap-2 flex-wrap justify-center">
               <span className="w-1.5 h-1.5 rounded-full brand-accent-bg pulse-slow flex-shrink-0" />
               <span className="font-mono text-[0.65rem] sm:text-[0.7rem] font-medium tracking-[0.16em] sm:tracking-[0.2em] brand-accent-text uppercase break-words">{hero.badge}</span>
