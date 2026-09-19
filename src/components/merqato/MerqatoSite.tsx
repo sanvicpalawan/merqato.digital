@@ -1006,7 +1006,7 @@ function Hero({ settings, heroSrc }: { settings: SiteSettings; heroSrc?: string 
         </p>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 fade-in-up w-full max-w-md sm:max-w-none mx-auto" style={{ animationDelay: '0.3s' }}>
           <a href="#packages" className="btn-primary text-white font-semibold px-6 sm:px-8 py-3.5 sm:py-4 rounded-lg inline-flex items-center justify-center gap-2 text-sm crimson-glow w-full sm:w-auto">{hero.primaryCta}<ArrowRight className="w-4 h-4 flex-shrink-0" /></a>
-          <a href="#process" className={`btn-secondary font-semibold px-6 sm:px-8 py-3.5 sm:py-4 rounded-lg inline-flex items-center justify-center gap-2 text-sm w-full sm:w-auto ${hasMedia ? 'backdrop-blur-md bg-white/70 dark:bg-white/15' : ''}`}>{hero.secondaryCta}<ChevronRight className="w-4 h-4 flex-shrink-0" /></a>
+          <a href="#process" className={`btn-secondary font-semibold px-6 sm:px-8 py-3.5 sm:py-4 rounded-lg inline-flex items-center justify-center gap-2 text-sm w-full sm:w-auto ${hasMedia ? 'bg-white/85 dark:bg-white/15' : ''}`}>{hero.secondaryCta}<ChevronRight className="w-4 h-4 flex-shrink-0" /></a>
         </div>
       </div>
     </section>
