@@ -8,11 +8,13 @@ import {
   addEntry,
   addLink,
   addLinksBulk,
+  addSocial,
   canPost as hasAuthorName,
   createSubject,
   deleteAttachment,
   deleteEntry,
   deleteLink,
+  deleteSocial,
   deleteSubject,
   getLocalRescueCounts,
   loadWorkstation,
@@ -22,6 +24,7 @@ import {
   updateSubject,
   type NewSubjectInput,
   type RescueCounts,
+  type SocialPlatform,
   type WorkstationAttachment,
   type WorkstationPriority,
   type WorkstationSnapshot,
@@ -107,6 +110,7 @@ export default function TeamWorkstation() {
   const subject = snapshot?.subjects.find((item) => item.id === openId) ?? null;
   const entries = (snapshot?.entries ?? []).filter((entry) => entry.subjectId === openId);
   const links = (snapshot?.links ?? []).filter((link) => link.subjectId === openId);
+  const socials = (snapshot?.socials ?? []).filter((social) => social.subjectId === openId);
   const attachments = (snapshot?.attachments ?? []).filter(
     (attachment) => attachment.subjectId === openId,
   );
@@ -187,7 +191,8 @@ export default function TeamWorkstation() {
           <p className="brand-copy text-[11px] leading-relaxed mt-1">
             {rescue.subjects} subject{rescue.subjects === 1 ? "" : "s"} · {rescue.entries} note
             {rescue.entries === 1 ? "" : "s"}/comment{rescue.entries === 1 ? "" : "s"} ·{" "}
-            {rescue.links} link{rescue.links === 1 ? "" : "s"} · {rescue.attachments} file
+            {rescue.links} link{rescue.links === 1 ? "" : "s"} · {rescue.socials} social
+            {rescue.socials === 1 ? "" : "s"} · {rescue.attachments} file
             {rescue.attachments === 1 ? "" : "s"} — saved here while the shared board was
             unreachable. Move them once and everyone sees them.
           </p>
@@ -237,6 +242,7 @@ export default function TeamWorkstation() {
           subject={subject}
           entries={entries}
           links={links}
+          socials={socials}
           attachments={attachments}
           attachmentUrls={snapshot?.attachmentUrls ?? {}}
           myToken={getAuthorToken()}
@@ -269,6 +275,10 @@ export default function TeamWorkstation() {
             )
           }
           onDeleteLink={(id) => run(() => deleteLink(id))}
+          onAddSocial={(platform: SocialPlatform, url: string, label: string) =>
+            run(() => addSocial({ subjectId: subject.id, platform, url, label }))
+          }
+          onDeleteSocial={(id) => run(() => deleteSocial(id))}
           onUpload={(files) => run(() => addAttachments(subject.id, files))}
           onDeleteAttachment={(attachment: WorkstationAttachment) =>
             run(() => deleteAttachment(attachment.id, attachment.storagePath))
@@ -279,6 +289,7 @@ export default function TeamWorkstation() {
           subjects={snapshot?.subjects ?? []}
           entries={snapshot?.entries ?? []}
           links={snapshot?.links ?? []}
+          socials={snapshot?.socials ?? []}
           attachments={snapshot?.attachments ?? []}
           busy={busy}
           canPost={hasAuthorName()}

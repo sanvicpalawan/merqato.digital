@@ -3,29 +3,44 @@ import {
   ArrowLeft,
   Copy,
   ExternalLink,
+  Facebook,
+  Globe,
   HardDrive,
   ImagePlus,
+  Instagram,
   Link2,
+  Linkedin,
   Mail,
   MapPin,
+  MessageCircle,
   MessageSquare,
+  Music2,
   Pencil,
   Phone,
   Send,
+  Share2,
   StickyNote,
   Trash2,
+  Twitter,
   User,
+  Youtube,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
+  clientBrief,
+  clientJson,
   formatBytes,
   isVideoAttachment,
   MAX_ENTRY_CHARS,
   parseUrlsBulk,
+  SOCIAL_PLATFORMS,
+  whatsappUrl,
+  type SocialPlatform,
   type WorkstationAttachment,
   type WorkstationEntry,
   type WorkstationLink,
   type WorkstationPriority,
+  type WorkstationSocial,
   type WorkstationSubject,
 } from "@/lib/workstation";
 import {
@@ -37,6 +52,7 @@ import {
   PriorityBadge,
   PriorityPicker,
   SectionCard,
+  Select,
   Stamp,
 } from "./parts";
 
@@ -44,6 +60,7 @@ export default function SubjectDetail({
   subject,
   entries,
   links,
+  socials,
   attachments,
   attachmentUrls,
   myToken,
@@ -59,12 +76,15 @@ export default function SubjectDetail({
   onAddLink,
   onAddLinksBulk,
   onDeleteLink,
+  onAddSocial,
+  onDeleteSocial,
   onUpload,
   onDeleteAttachment,
 }: {
   subject: WorkstationSubject;
   entries: WorkstationEntry[];
   links: WorkstationLink[];
+  socials: WorkstationSocial[];
   attachments: WorkstationAttachment[];
   attachmentUrls: Record<string, string>;
   myToken: string;
@@ -75,6 +95,9 @@ export default function SubjectDetail({
   onDeleteSubject: () => Promise<void>;
   onCover: (file: File) => Promise<void>;
   onUpdateSubject: (patch: {
+    title?: string;
+    summary?: string;
+    category?: string;
     contactName?: string;
     contactPhone?: string;
     contactEmail?: string;
@@ -89,6 +112,8 @@ export default function SubjectDetail({
   onAddLink: (kind: "url" | "drive", url: string, label: string) => Promise<void>;
   onAddLinksBulk: (kind: "url" | "drive", urls: string[], label: string) => Promise<void>;
   onDeleteLink: (id: string) => Promise<void>;
+  onAddSocial: (platform: SocialPlatform, url: string, label: string) => Promise<void>;
+  onDeleteSocial: (id: string) => Promise<void>;
   onUpload: (files: File[]) => Promise<void>;
   onDeleteAttachment: (attachment: WorkstationAttachment) => Promise<void>;
 }) {
@@ -106,6 +131,13 @@ export default function SubjectDetail({
   const [cPhone, setCPhone] = useState("");
   const [cEmail, setCEmail] = useState("");
   const [cAddress, setCAddress] = useState("");
+  const [socialPlatform, setSocialPlatform] = useState<SocialPlatform>("Facebook");
+  const [socialUrl, setSocialUrl] = useState("");
+  const [socialLabel, setSocialLabel] = useState("");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [eTitle, setETitle] = useState("");
+  const [eSummary, setESummary] = useState("");
+  const [eCategory, setECategory] = useState("");
   const [copied, setCopied] = useState("");
   const coverInput = useRef<HTMLInputElement>(null);
   const imageInput = useRef<HTMLInputElement>(null);
@@ -119,6 +151,27 @@ export default function SubjectDetail({
   const webLinks = links.filter((link) => link.kind === "url");
   const coverUrl = subject.coverPath ? attachmentUrls[subject.coverPath] : undefined;
   const isOwner = subject.authorToken === myToken;
+
+  const socialIcon = (platform: SocialPlatform) => {
+    switch (platform) {
+      case "Facebook":
+        return Facebook;
+      case "Instagram":
+        return Instagram;
+      case "YouTube":
+        return Youtube;
+      case "TikTok":
+        return Music2;
+      case "X":
+        return Twitter;
+      case "LinkedIn":
+        return Linkedin;
+      case "Website":
+        return Globe;
+      default:
+        return Link2;
+    }
+  };
   const hasContact = Boolean(
     subject.contactName || subject.contactPhone || subject.contactEmail || subject.contactAddress,
   );
@@ -140,6 +193,33 @@ export default function SubjectDetail({
     });
     setEditingContact(false);
   };
+
+  const openTitleEdit = () => {
+    setETitle(subject.title);
+    setESummary(subject.summary);
+    setECategory(subject.category);
+    setEditingTitle(true);
+  };
+
+  const saveTitle = async () => {
+    if (!eTitle.trim()) return;
+    await onUpdateSubject({
+      title: eTitle.trim(),
+      summary: eSummary.trim(),
+      category: eCategory.trim() || subject.category,
+    });
+    setEditingTitle(false);
+  };
+
+  const submitSocial = async () => {
+    if (!socialUrl.trim()) return;
+    await onAddSocial(socialPlatform, socialUrl, socialLabel);
+    setSocialUrl("");
+    setSocialLabel("");
+  };
+
+  const brief = clientBrief({ subject, links, socials });
+  const briefJson = clientJson({ subject, entries, links, socials, attachments });
 
   const copy = async (url: string, id: string) => {
     try {
@@ -191,6 +271,60 @@ export default function SubjectDetail({
         </div>
         <PriorityBadge priority={subject.priority} className="mt-1" />
       </div>
+
+      {editingTitle ? (
+        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 space-y-2">
+          <Field
+            label="Client / subject title"
+            value={eTitle}
+            onChange={setETitle}
+            placeholder="Client name"
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Field
+              label="Category"
+              value={eCategory}
+              onChange={setECategory}
+              placeholder="Client"
+            />
+            <div className="flex items-end gap-2">
+              <button
+                type="button"
+                disabled={busy || !eTitle.trim()}
+                onClick={() => void saveTitle()}
+                className="btn-primary text-white px-4 py-2.5 rounded-lg text-[11px] font-semibold disabled:opacity-50 lg:text-xs"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingTitle(false)}
+                className="px-3 py-2.5 rounded-lg text-[11px] font-semibold text-slate-500 dark:text-white/60 hover:bg-slate-100 dark:hover:bg-white/5 lg:text-xs"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+          <Area
+            label="Summary"
+            value={eSummary}
+            onChange={setESummary}
+            rows={3}
+            placeholder="What is this client about?"
+          />
+        </div>
+      ) : (
+        canPost && (
+          <button
+            type="button"
+            onClick={openTitleEdit}
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-white/50 hover:brand-accent-text lg:text-xs"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            Edit title & summary
+          </button>
+        )
+      )}
 
       {subject.summary && (
         <p className="brand-copy text-xs leading-relaxed break-words whitespace-pre-wrap lg:text-sm lg:leading-relaxed">
@@ -259,6 +393,69 @@ export default function SubjectDetail({
             className="w-full h-36 object-cover rounded-2xl border border-slate-200 dark:border-white/10"
           />
         ))}
+
+      {/* ── Share bar: reach the client, forward the file ── */}
+      <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5 flex items-center gap-2 flex-wrap">
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 dark:text-white/30 mr-1">
+          <Share2 className="w-3.5 h-3.5" />
+          Share
+        </span>
+        {subject.contactPhone && (
+          <>
+            <a
+              href={`tel:${subject.contactPhone.replace(/[^+\d]/g, "")}`}
+              className="px-3 py-2 rounded-lg btn-primary text-white text-[11px] font-semibold inline-flex items-center gap-1.5 lg:text-xs"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              Call
+            </a>
+            <a
+              href={whatsappUrl(subject.contactPhone)}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="px-3 py-2 rounded-lg bg-[#25D366] text-white text-[11px] font-semibold inline-flex items-center gap-1.5 lg:text-xs"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              WhatsApp
+            </a>
+          </>
+        )}
+        {subject.contactEmail && (
+          <a
+            href={`mailto:${subject.contactEmail}`}
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-[11px] font-semibold brand-heading inline-flex items-center gap-1.5 hover:border-[var(--crimson)] lg:text-xs"
+          >
+            <Mail className="w-3.5 h-3.5" />
+            Email
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={() => void copy(brief, "brief")}
+          className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-[11px] font-semibold brand-heading inline-flex items-center gap-1.5 hover:border-[var(--crimson)] lg:text-xs"
+        >
+          <Copy className="w-3.5 h-3.5" />
+          {copied === "brief" ? "Copied!" : "Copy brief"}
+        </button>
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(brief)}`}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-[11px] font-semibold brand-heading inline-flex items-center gap-1.5 hover:border-[var(--crimson)] lg:text-xs"
+        >
+          <MessageCircle className="w-3.5 h-3.5" />
+          Forward via WhatsApp
+        </a>
+        <button
+          type="button"
+          onClick={() => void copy(briefJson, "json")}
+          title="Structured client data for a future AI agent"
+          className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-[11px] font-semibold brand-heading inline-flex items-center gap-1.5 hover:border-[var(--crimson)] lg:text-xs"
+        >
+          <Copy className="w-3.5 h-3.5" />
+          {copied === "json" ? "Copied!" : "Copy agent JSON"}
+        </button>
+      </div>
 
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_380px] xl:gap-5">
         {/* ── Client contact ──────────────────────────────── */}
@@ -416,7 +613,7 @@ export default function SubjectDetail({
         )}
 
         {/* ── Notes ─────────────────────────────────────────── */}
-        <div className="min-w-0 xl:col-start-1 xl:row-start-1 xl:row-span-3">
+        <div className="min-w-0 xl:col-start-1 xl:row-start-1 xl:row-span-4">
           <SectionCard
             title="Notes"
             icon={StickyNote}
@@ -682,8 +879,125 @@ export default function SubjectDetail({
           </SectionCard>
         </div>
 
-        {/* ── Images & video ──────────────────────────────── */}
+        {/* ── Socials ───────────────────────────────────────── */}
         <div className="min-w-0 xl:col-start-2 xl:row-start-3">
+          <SectionCard
+            title="Socials"
+            icon={Share2}
+            count={socials.length}
+            hint="Client social profiles in one directory — tap to open, no more looking them up."
+          >
+            <div className="space-y-3">
+              {canPost && (
+                <div className="space-y-2">
+                  <Select
+                    label="Platform"
+                    value={socialPlatform}
+                    onChange={(value) => setSocialPlatform(value as SocialPlatform)}
+                    options={SOCIAL_PLATFORMS.map((platform) => ({
+                      value: platform,
+                      label: platform,
+                    }))}
+                  />
+                  <Field
+                    label="Profile URL"
+                    value={socialUrl}
+                    onChange={setSocialUrl}
+                    placeholder="https://facebook.com/..."
+                  />
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1 min-w-0">
+                      <Field
+                        label="Label (optional)"
+                        value={socialLabel}
+                        onChange={setSocialLabel}
+                        placeholder="Main page"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      disabled={busy || !socialUrl.trim()}
+                      onClick={() => void submitSocial()}
+                      className="btn-primary text-white px-3.5 py-2.5 rounded-lg text-[11px] font-semibold disabled:opacity-50 flex-shrink-0 lg:text-xs"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              )}
+              {socials.length === 0 ? (
+                <EmptyHint>No socials saved yet.</EmptyHint>
+              ) : (
+                <ul className="space-y-1.5">
+                  {socials.map((social) => {
+                    const Icon = socialIcon(social.platform);
+                    return (
+                      <li
+                        key={social.id}
+                        className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Icon className="w-4 h-4 brand-accent-text flex-shrink-0" />
+                          <a
+                            href={social.url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="min-w-0 flex-1 group"
+                          >
+                            <span className="text-xs font-semibold brand-heading group-hover:brand-accent-text lg:text-sm">
+                              {social.platform}
+                              {social.label ? ` · ${social.label}` : ""}
+                            </span>
+                            <span className="block text-[11px] text-slate-400 dark:text-white/30 break-all mt-0.5 lg:text-xs">
+                              {social.url}
+                            </span>
+                          </a>
+                          <span className="flex items-center gap-0.5 flex-shrink-0">
+                            <IconButton
+                              label="Copy link"
+                              onClick={() => void copy(social.url, social.id)}
+                            >
+                              {copied === social.id ? (
+                                <span className="text-[9px] font-bold">OK</span>
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </IconButton>
+                            <a
+                              href={social.url}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                              title="Open in new tab"
+                              className="w-7 h-7 rounded-lg inline-flex items-center justify-center text-slate-500 dark:text-white/50 hover:bg-slate-200/70 dark:hover:bg-white/10"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                            {social.authorToken === myToken && (
+                              <IconButton
+                                label="Delete social"
+                                tone="danger"
+                                disabled={busy}
+                                onClick={() => void onDeleteSocial(social.id)}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </IconButton>
+                            )}
+                          </span>
+                        </div>
+                        <div className="mt-1.5">
+                          <AuthorChip name={social.createdBy} iso={social.createdAt} />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </SectionCard>
+        </div>
+
+        {/* ── Images & video ──────────────────────────────── */}
+        <div className="min-w-0 xl:col-start-2 xl:row-start-4">
           <SectionCard
             title="Images & video from device"
             icon={ImagePlus}

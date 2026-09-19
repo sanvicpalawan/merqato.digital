@@ -6,9 +6,13 @@ import {
   HardDrive,
   ImagePlus,
   Link2,
+  Mail,
+  MessageCircle,
   MessageSquare,
+  Phone,
   Plus,
   Search,
+  Share2,
   Sparkles,
   StickyNote,
   X,
@@ -17,11 +21,13 @@ import { cn } from "@/lib/utils";
 import {
   PRIORITY_OPTIONS,
   SUBJECT_CATEGORIES,
+  whatsappUrl,
   type NewSubjectInput,
   type WorkstationAttachment,
   type WorkstationEntry,
   type WorkstationLink,
   type WorkstationPriority,
+  type WorkstationSocial,
   type WorkstationSubject,
 } from "@/lib/workstation";
 import {
@@ -36,7 +42,14 @@ import {
   priorityRank,
 } from "./parts";
 
-type Counts = { comments: number; notes: number; links: number; drive: number; images: number };
+type Counts = {
+  comments: number;
+  notes: number;
+  links: number;
+  drive: number;
+  socials: number;
+  images: number;
+};
 
 const STARTERS = [
   {
@@ -63,6 +76,7 @@ export default function SubjectList({
   subjects,
   entries,
   links,
+  socials,
   attachments,
   busy,
   canPost,
@@ -72,6 +86,7 @@ export default function SubjectList({
   subjects: WorkstationSubject[];
   entries: WorkstationEntry[];
   links: WorkstationLink[];
+  socials: WorkstationSocial[];
   attachments: WorkstationAttachment[];
   busy: boolean;
   canPost: boolean;
@@ -96,7 +111,7 @@ export default function SubjectList({
   const counts = useMemo(() => {
     const map: Record<string, Counts> = {};
     subjects.forEach((subject) => {
-      map[subject.id] = { comments: 0, notes: 0, links: 0, drive: 0, images: 0 };
+      map[subject.id] = { comments: 0, notes: 0, links: 0, drive: 0, socials: 0, images: 0 };
     });
     entries.forEach((entry) => {
       const bucket = map[entry.subjectId];
@@ -110,12 +125,16 @@ export default function SubjectList({
       if (link.kind === "drive") bucket.drive += 1;
       else bucket.links += 1;
     });
+    socials.forEach((social) => {
+      const bucket = map[social.subjectId];
+      if (bucket) bucket.socials += 1;
+    });
     attachments.forEach((attachment) => {
       const bucket = map[attachment.subjectId];
       if (bucket) bucket.images += 1;
     });
     return map;
-  }, [subjects, entries, links, attachments]);
+  }, [subjects, entries, links, socials, attachments]);
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -126,7 +145,10 @@ export default function SubjectList({
           !needle ||
           subject.title.toLowerCase().includes(needle) ||
           subject.summary.toLowerCase().includes(needle) ||
-          subject.category.toLowerCase().includes(needle),
+          subject.category.toLowerCase().includes(needle) ||
+          subject.contactName.toLowerCase().includes(needle) ||
+          subject.contactPhone.toLowerCase().includes(needle) ||
+          subject.contactEmail.toLowerCase().includes(needle),
       )
       .slice()
       .sort(
@@ -179,7 +201,7 @@ export default function SubjectList({
   };
 
   const tally = (subject: WorkstationSubject) =>
-    counts[subject.id] ?? { comments: 0, notes: 0, links: 0, drive: 0, images: 0 };
+    counts[subject.id] ?? { comments: 0, notes: 0, links: 0, drive: 0, socials: 0, images: 0 };
 
   return (
     <div className="space-y-4">
@@ -369,66 +391,209 @@ export default function SubjectList({
           )}
         </div>
       ) : (
-        <div className="space-y-2.5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3">
-          {visible.map((subject) => {
-            const stat = tally(subject);
-            return (
-              <button
-                key={subject.id}
-                type="button"
-                onClick={() => onOpen(subject.id)}
-                className="w-full text-left rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 transition-all hover:border-[var(--crimson)] hover:shadow-sm group lg:p-5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <PriorityBadge priority={subject.priority} />
-                      {subject.category && (
-                        <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 dark:text-white/30">
-                          {subject.category}
+        <>
+          {/* Desktop clients table — every client, contact + reach in one row */}
+          <div className="hidden lg:block rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.04]">
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-white/40">
+                    Client
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-white/40">
+                    Contact
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-white/40">
+                    Reach
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-white/40">
+                    Content
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-white/40">
+                    Updated
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((subject) => {
+                  const stat = tally(subject);
+                  return (
+                    <tr
+                      key={subject.id}
+                      onClick={() => onOpen(subject.id)}
+                      className="border-b border-slate-100 dark:border-white/5 last:border-0 cursor-pointer transition-colors hover:bg-[var(--crimson-soft)]"
+                    >
+                      <td className="px-4 py-3.5 max-w-[260px]">
+                        <div className="flex items-center gap-2 mb-1">
+                          <PriorityBadge priority={subject.priority} />
+                          {subject.category && (
+                            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 dark:text-white/30">
+                              {subject.category}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm font-bold brand-heading truncate">{subject.title}</p>
+                        {subject.summary && (
+                          <p className="brand-copy text-xs truncate mt-0.5">{subject.summary}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5 max-w-[200px]">
+                        {subject.contactName || subject.contactPhone || subject.contactEmail ? (
+                          <>
+                            {subject.contactName && (
+                              <p className="text-sm font-semibold brand-heading truncate">
+                                {subject.contactName}
+                              </p>
+                            )}
+                            {subject.contactPhone && (
+                              <p className="text-xs brand-copy truncate">{subject.contactPhone}</p>
+                            )}
+                            {subject.contactEmail && (
+                              <p className="text-xs brand-copy truncate">{subject.contactEmail}</p>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-xs text-slate-400 dark:text-white/30">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <span
+                          className="inline-flex items-center gap-1.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {subject.contactPhone && (
+                            <>
+                              <a
+                                href={`tel:${subject.contactPhone.replace(/[^+\d]/g, "")}`}
+                                title={`Call ${subject.contactName || subject.title}`}
+                                className="w-8 h-8 rounded-lg inline-flex items-center justify-center border border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/60 hover:border-[var(--crimson)] hover:brand-accent-text"
+                              >
+                                <Phone className="w-4 h-4" />
+                              </a>
+                              <a
+                                href={whatsappUrl(subject.contactPhone)}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                title="WhatsApp"
+                                className="w-8 h-8 rounded-lg inline-flex items-center justify-center bg-[#25D366] text-white"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                              </a>
+                            </>
+                          )}
+                          {subject.contactEmail && (
+                            <a
+                              href={`mailto:${subject.contactEmail}`}
+                              title="Email"
+                              className="w-8 h-8 rounded-lg inline-flex items-center justify-center border border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/60 hover:border-[var(--crimson)] hover:brand-accent-text"
+                            >
+                              <Mail className="w-4 h-4" />
+                            </a>
+                          )}
+                          {!subject.contactPhone && !subject.contactEmail && (
+                            <span className="text-xs text-slate-400 dark:text-white/30">—</span>
+                          )}
                         </span>
-                      )}
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-3 text-xs text-slate-500 dark:text-white/40">
+                          <span className="inline-flex items-center gap-1" title="Notes">
+                            <StickyNote className="w-3.5 h-3.5" />
+                            {stat.notes}
+                          </span>
+                          <span className="inline-flex items-center gap-1" title="Comments">
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            {stat.comments}
+                          </span>
+                          <span className="inline-flex items-center gap-1" title="Links">
+                            <Link2 className="w-3.5 h-3.5" />
+                            {stat.links + stat.drive}
+                          </span>
+                          <span className="inline-flex items-center gap-1" title="Socials">
+                            <Share2 className="w-3.5 h-3.5" />
+                            {stat.socials}
+                          </span>
+                          <span className="inline-flex items-center gap-1" title="Files">
+                            <ImagePlus className="w-3.5 h-3.5" />
+                            {stat.images}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <Stamp iso={subject.updatedAt} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {/* Mobile / tablet cards */}
+          <div className="space-y-2.5 lg:hidden">
+            {visible.map((subject) => {
+              const stat = tally(subject);
+              return (
+                <button
+                  key={subject.id}
+                  type="button"
+                  onClick={() => onOpen(subject.id)}
+                  className="w-full text-left rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 transition-all hover:border-[var(--crimson)] hover:shadow-sm group lg:p-5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <PriorityBadge priority={subject.priority} />
+                        {subject.category && (
+                          <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 dark:text-white/30">
+                            {subject.category}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-sm font-bold brand-heading truncate lg:text-lg">
+                        {subject.title}
+                      </h3>
                     </div>
-                    <h3 className="text-sm font-bold brand-heading truncate lg:text-lg">
-                      {subject.title}
-                    </h3>
+                    <ArrowUpRight className="w-4 h-4 text-slate-300 dark:text-white/20 group-hover:brand-accent-text flex-shrink-0 mt-1" />
                   </div>
-                  <ArrowUpRight className="w-4 h-4 text-slate-300 dark:text-white/20 group-hover:brand-accent-text flex-shrink-0 mt-1" />
-                </div>
 
-                {subject.summary && (
-                  <p className="brand-copy text-xs leading-relaxed mt-2 line-clamp-2 lg:text-sm">
-                    {subject.summary}
-                  </p>
-                )}
+                  {subject.summary && (
+                    <p className="brand-copy text-xs leading-relaxed mt-2 line-clamp-2 lg:text-sm">
+                      {subject.summary}
+                    </p>
+                  )}
 
-                <div className="flex items-center gap-3 mt-3 flex-wrap text-[11px] text-slate-500 dark:text-white/40 lg:text-xs lg:gap-4">
-                  <span className="inline-flex items-center gap-1">
-                    <StickyNote className="w-3.5 h-3.5" />
-                    {stat.notes}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    {stat.comments}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Link2 className="w-3.5 h-3.5" />
-                    {stat.links}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <HardDrive className="w-3.5 h-3.5" />
-                    {stat.drive}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <ImagePlus className="w-3.5 h-3.5" />
-                    {stat.images}
-                  </span>
-                  <Stamp iso={subject.updatedAt} className="ml-auto" />
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                  <div className="flex items-center gap-3 mt-3 flex-wrap text-[11px] text-slate-500 dark:text-white/40 lg:text-xs lg:gap-4">
+                    <span className="inline-flex items-center gap-1">
+                      <StickyNote className="w-3.5 h-3.5" />
+                      {stat.notes}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      {stat.comments}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Link2 className="w-3.5 h-3.5" />
+                      {stat.links}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <HardDrive className="w-3.5 h-3.5" />
+                      {stat.drive}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <ImagePlus className="w-3.5 h-3.5" />
+                      {stat.images}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Share2 className="w-3.5 h-3.5" />
+                      {stat.socials}
+                    </span>
+                    <Stamp iso={subject.updatedAt} className="ml-auto" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </>
       )}
 
       <p className="text-[11px] text-slate-400 dark:text-white/25 inline-flex items-center gap-1.5">

@@ -87,6 +87,30 @@ export type WorkstationLink = {
   createdAt: string;
 };
 
+export const SOCIAL_PLATFORMS = [
+  "Facebook",
+  "Instagram",
+  "YouTube",
+  "TikTok",
+  "X",
+  "LinkedIn",
+  "Website",
+  "Other",
+] as const;
+
+export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
+
+export type WorkstationSocial = {
+  id: string;
+  subjectId: string;
+  platform: SocialPlatform;
+  url: string;
+  label: string;
+  createdBy: string;
+  authorToken: string;
+  createdAt: string;
+};
+
 export type WorkstationAttachment = {
   id: string;
   subjectId: string;
@@ -103,6 +127,7 @@ export type WorkstationSnapshot = {
   subjects: WorkstationSubject[];
   entries: WorkstationEntry[];
   links: WorkstationLink[];
+  socials: WorkstationSocial[];
   attachments: WorkstationAttachment[];
   /** Resolved <img> src per attachment storage path. */
   attachmentUrls: Record<string, string>;
@@ -115,6 +140,7 @@ const EMPTY: WorkstationSnapshot = {
   subjects: [],
   entries: [],
   links: [],
+  socials: [],
   attachments: [],
   attachmentUrls: {},
   source: "local",
@@ -281,6 +307,7 @@ function readLocal(): WorkstationSnapshot {
       subjects: parsed.subjects ?? [],
       entries: parsed.entries ?? [],
       links: parsed.links ?? [],
+      socials: parsed.socials ?? [],
       attachments: parsed.attachments ?? [],
       attachmentUrls: {},
       source: "local",
@@ -297,6 +324,7 @@ function writeLocal(snapshot: WorkstationSnapshot) {
       subjects: snapshot.subjects,
       entries: snapshot.entries,
       links: snapshot.links,
+      socials: snapshot.socials,
       attachments: snapshot.attachments,
     }),
   );
@@ -359,6 +387,30 @@ function mapLink(row: Row): WorkstationLink {
   };
 }
 
+function isSocialPlatform(value: string): value is SocialPlatform {
+  return (SOCIAL_PLATFORMS as readonly string[]).includes(value);
+}
+
+function mapSocial(row: Row): WorkstationSocial {
+  const platform = str(row.platform, "Other");
+  return {
+    id: str(row.id),
+    subjectId: str(row.subject_id),
+    platform: isSocialPlatform(platform) ? platform : "Other",
+    url: str(row.url),
+    label: str(row.label),
+    createdBy: str(row.created_by, "Unknown"),
+    authorToken: str(row.author_token),
+    createdAt: str(row.created_at, new Date().toISOString()),
+  };
+}
+
+/** True when Supabase says a workstation table doesn't exist yet (migration not applied). */
+function isMissingTable(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return /could not find the table|PGRST205|does not exist| 404|not found/i.test(message);
+}
+
 function mapAttachment(row: Row): WorkstationAttachment {
   return {
     id: str(row.id),
@@ -416,6 +468,22 @@ export async function loadWorkstation(): Promise<WorkstationSnapshot> {
       if (result.error) throw new Error(result.error.message);
     }
 
+    // Socials table arrives with migration v4 — older clouds simply show none.
+    let socials: WorkstationSocial[] = [];
+    try {
+      const res = await client
+        .from("workstation_socials")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (res.error) {
+        if (!isMissingTable(res.error)) throw new Error(res.error.message);
+      } else {
+        socials = (res.data ?? []).map(mapSocial);
+      }
+    } catch (err) {
+      if (!isMissingTable(err)) throw err;
+    }
+
     const mappedAttachments = (attachments.data ?? []).map(mapAttachment);
     const urls: Record<string, string> = {};
     mappedAttachments.forEach((attachment) => {
@@ -428,6 +496,7 @@ export async function loadWorkstation(): Promise<WorkstationSnapshot> {
       subjects: (subjects.data ?? []).map(mapSubject),
       entries: (entries.data ?? []).map(mapEntry),
       links: (links.data ?? []).map(mapLink),
+      socials,
       attachments: mappedAttachments,
       attachmentUrls: urls,
       source: "cloud",
@@ -592,6 +661,7 @@ export async function deleteSubject(id: string): Promise<void> {
       subjects: snapshot.subjects.filter((subject) => subject.id !== id),
       entries: snapshot.entries.filter((entry) => entry.subjectId !== id),
       links: snapshot.links.filter((link) => link.subjectId !== id),
+      socials: snapshot.socials.filter((social) => social.subjectId !== id),
       attachments: snapshot.attachments.filter((attachment) => attachment.subjectId !== id),
     }));
     return;
@@ -719,6 +789,71 @@ export async function deleteLink(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+function requireSocialsTable(error: unknown): void {
+  if (isMissingTable(error)) {
+    throw new Error("Run the workstation v4 migration in Supabase first (socials table).");
+  }
+}
+
+export async function addSocial(input: {
+  subjectId: string;
+  platform: SocialPlatform;
+  url: string;
+  label?: string;
+}): Promise<void> {
+  const url = input.url.trim();
+  if (!url) throw new Error("Paste a profile link first.");
+  const withScheme = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+  const who = author();
+  const id = uuid();
+  const now = new Date().toISOString();
+  const row = {
+    id,
+    subjectId: input.subjectId,
+    platform: input.platform,
+    url: withScheme,
+    label: (input.label ?? "").trim(),
+    createdBy: who.name,
+    authorToken: who.token,
+    createdAt: now,
+  };
+
+  if (!cloudReady()) {
+    mutateLocal((snapshot) => ({ ...snapshot, socials: [...snapshot.socials, row] }));
+    return;
+  }
+
+  try {
+    const { error } = await requireClient()
+      .from("workstation_socials")
+      .insert({
+        id,
+        subject_id: input.subjectId,
+        platform: input.platform,
+        url: withScheme,
+        label: (input.label ?? "").trim() || null,
+        created_by: who.name,
+        author_token: who.token,
+      });
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    requireSocialsTable(err);
+    throw err instanceof Error ? err : new Error("Could not save the social link.");
+  }
+}
+
+export async function deleteSocial(id: string): Promise<void> {
+  if (!cloudReady()) {
+    mutateLocal((snapshot) => ({
+      ...snapshot,
+      socials: snapshot.socials.filter((social) => social.id !== id),
+    }));
+    return;
+  }
+  const { error } = await requireClient().from("workstation_socials").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 /** Save many URLs / Drive URLs at once — one row per URL, all stamped. */
 export async function addLinksBulk(input: {
   subjectId: string;
@@ -817,6 +952,7 @@ export type RescueCounts = {
   subjects: number;
   entries: number;
   links: number;
+  socials: number;
   attachments: number;
 };
 
@@ -827,12 +963,13 @@ export function getLocalRescueCounts(): RescueCounts {
     subjects: local.subjects.length,
     entries: local.entries.length,
     links: local.links.length,
+    socials: local.socials.length,
     attachments: local.attachments.length,
   };
 }
 
 export function rescueTotal(counts: RescueCounts): number {
-  return counts.subjects + counts.entries + counts.links + counts.attachments;
+  return counts.subjects + counts.entries + counts.links + counts.socials + counts.attachments;
 }
 
 function isAlreadyMoved(error: unknown): boolean {
@@ -862,7 +999,7 @@ export async function migrateLocalToCloud(): Promise<RescueCounts> {
   void who;
   const client = requireClient();
   const local = readLocal();
-  const moved: RescueCounts = { subjects: 0, entries: 0, links: 0, attachments: 0 };
+  const moved: RescueCounts = { subjects: 0, entries: 0, links: 0, socials: 0, attachments: 0 };
 
   for (const subject of local.subjects) {
     const coverPath = subject.coverPath
@@ -914,6 +1051,25 @@ export async function migrateLocalToCloud(): Promise<RescueCounts> {
     if (!error) moved.links += 1;
   }
 
+  for (const social of local.socials) {
+    try {
+      const { error } = await client.from("workstation_socials").insert({
+        id: social.id,
+        subject_id: social.subjectId,
+        platform: social.platform,
+        url: social.url,
+        label: social.label || null,
+        created_by: social.createdBy,
+        author_token: social.authorToken,
+      });
+      if (error && !isAlreadyMoved(error)) throw new Error(error.message);
+      if (!error) moved.socials += 1;
+    } catch (err) {
+      if (!isMissingTable(err)) throw err;
+      // Cloud predates the socials table — text posts still move; socials retry later.
+    }
+  }
+
   for (const attachment of local.attachments) {
     const storagePath = await reuploadLocalFile(attachment.storagePath).catch(() => null);
     if (!storagePath) continue;
@@ -938,6 +1094,102 @@ export async function migrateLocalToCloud(): Promise<RescueCounts> {
     /* storage unavailable — harmless */
   }
   return moved;
+}
+
+/* ───────────────────── share helpers ─────────────────────
+ *
+ * One-tap client outreach: direct call / WhatsApp / email links plus
+ * a forwardable text brief and a structured JSON snapshot a future
+ * AI agent can ingest without scraping the UI.
+ */
+
+/** Normalize a phone number for wa.me — PH mobiles starting with 0 become 63…. */
+export function waNumber(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("0") && digits.length >= 10) return `63${digits.slice(1)}`;
+  return digits;
+}
+
+export function whatsappUrl(phone: string, text?: string): string {
+  const base = `https://wa.me/${waNumber(phone)}`;
+  return text ? `${base}?text=${encodeURIComponent(text)}` : base;
+}
+
+/** Forwardable client brief: contact + every URL, ready for WhatsApp or copy. */
+export function clientBrief(input: {
+  subject: WorkstationSubject;
+  links: WorkstationLink[];
+  socials: WorkstationSocial[];
+}): string {
+  const { subject, links, socials } = input;
+  const lines = [
+    `${subject.title} — merQato client file`,
+    subject.summary ? subject.summary : null,
+    subject.contactName ? `Contact: ${subject.contactName}` : null,
+    subject.contactPhone ? `Phone/WhatsApp: ${subject.contactPhone}` : null,
+    subject.contactEmail ? `Email: ${subject.contactEmail}` : null,
+    subject.contactAddress ? `Address: ${subject.contactAddress}` : null,
+  ].filter(Boolean) as string[];
+
+  const web = links.filter((l) => l.kind === "url");
+  const drive = links.filter((l) => l.kind === "drive");
+  if (socials.length > 0) {
+    lines.push("", "Socials:");
+    socials.forEach((s) => lines.push(`- ${s.platform}: ${s.url}`));
+  }
+  if (web.length > 0) {
+    lines.push("", "Links:");
+    web.forEach((l) => lines.push(`- ${l.label || l.url}${l.label ? ` (${l.url})` : ""}`));
+  }
+  if (drive.length > 0) {
+    lines.push("", "Drive:");
+    drive.forEach((l) => lines.push(`- ${l.label || l.url}${l.label ? ` (${l.url})` : ""}`));
+  }
+  return lines.join("\n");
+}
+
+/** Structured client snapshot for a future agent — stable keys, no UI scraping. */
+export function clientJson(input: {
+  subject: WorkstationSubject;
+  entries: WorkstationEntry[];
+  links: WorkstationLink[];
+  socials: WorkstationSocial[];
+  attachments: WorkstationAttachment[];
+}): string {
+  const { subject, entries, links, socials, attachments } = input;
+  return JSON.stringify(
+    {
+      client: {
+        name: subject.title,
+        summary: subject.summary,
+        category: subject.category,
+        priority: subject.priority,
+        contact: {
+          name: subject.contactName,
+          phone: subject.contactPhone,
+          whatsapp: subject.contactPhone ? whatsappUrl(subject.contactPhone) : "",
+          email: subject.contactEmail,
+          address: subject.contactAddress,
+        },
+      },
+      notes: entries
+        .filter((e) => e.kind === "note")
+        .map((e) => ({ body: e.body, priority: e.priority, by: e.createdBy, at: e.createdAt })),
+      comments: entries
+        .filter((e) => e.kind === "comment")
+        .map((e) => ({ body: e.body, by: e.createdBy, at: e.createdAt })),
+      links: links.map((l) => ({ kind: l.kind, label: l.label, url: l.url })),
+      socials: socials.map((s) => ({ platform: s.platform, label: s.label, url: s.url })),
+      files: attachments.map((a) => ({
+        name: a.fileName,
+        type: a.contentType,
+        path: a.storagePath,
+      })),
+      exportedAt: new Date().toISOString(),
+    },
+    null,
+    2,
+  );
 }
 
 /* ───────────────────── formatting helpers ───────────────────── */
