@@ -369,7 +369,7 @@ export default function SubjectList({
           )}
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3">
           {visible.map((subject) => {
             const stat = tally(subject);
             return (
