@@ -224,7 +224,7 @@ export default function SubjectList({
               type="button"
               onClick={() => setFilter(id)}
               className={cn(
-                "px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold transition-all",
+                "px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold transition-all lg:text-xs lg:px-3.5 lg:py-2",
                 filter === id
                   ? "bg-[var(--crimson)] border-transparent text-white"
                   : "border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/50 hover:border-slate-300 dark:hover:border-white/20",
@@ -377,7 +377,7 @@ export default function SubjectList({
                 key={subject.id}
                 type="button"
                 onClick={() => onOpen(subject.id)}
-                className="w-full text-left rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 transition-all hover:border-[var(--crimson)] hover:shadow-sm group"
+                className="w-full text-left rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 transition-all hover:border-[var(--crimson)] hover:shadow-sm group lg:p-5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -389,18 +389,20 @@ export default function SubjectList({
                         </span>
                       )}
                     </div>
-                    <h3 className="text-sm font-bold brand-heading truncate">{subject.title}</h3>
+                    <h3 className="text-sm font-bold brand-heading truncate lg:text-lg">
+                      {subject.title}
+                    </h3>
                   </div>
                   <ArrowUpRight className="w-4 h-4 text-slate-300 dark:text-white/20 group-hover:brand-accent-text flex-shrink-0 mt-1" />
                 </div>
 
                 {subject.summary && (
-                  <p className="brand-copy text-xs leading-relaxed mt-2 line-clamp-2">
+                  <p className="brand-copy text-xs leading-relaxed mt-2 line-clamp-2 lg:text-sm">
                     {subject.summary}
                   </p>
                 )}
 
-                <div className="flex items-center gap-3 mt-3 flex-wrap text-[11px] text-slate-500 dark:text-white/40">
+                <div className="flex items-center gap-3 mt-3 flex-wrap text-[11px] text-slate-500 dark:text-white/40 lg:text-xs lg:gap-4">
                   <span className="inline-flex items-center gap-1">
                     <StickyNote className="w-3.5 h-3.5" />
                     {stat.notes}

@@ -2,8 +2,6 @@
 @source "../src";
 @import "tw-animate-css";
 
-
-
 /*
  * Design system definition.
  *
@@ -147,12 +145,14 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-  --font-brand: 'Futura', 'Futura PT', 'Century Gothic', 'Questrial', sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-brand: "Futura", "Futura PT", "Century Gothic", "Questrial", sans-serif;
 }
 
-*, ::before, ::after {
+*,
+::before,
+::after {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   box-sizing: border-box;
@@ -184,12 +184,27 @@ body {
   }
 }
 
-img, video, canvas, svg {
+img,
+video,
+canvas,
+svg {
   max-width: 100%;
   height: auto;
 }
 
-h1, h2, h3, h4, h5, h6, p, span, a, label, li, td, th {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+a,
+label,
+li,
+td,
+th {
   overflow-wrap: break-word;
   word-wrap: break-word;
 }
@@ -197,13 +212,13 @@ h1, h2, h3, h4, h5, h6, p, span, a, label, li, td, th {
 /* ─── LIGHT MODE (default) ────────────────────────────────── */
 :root {
   --user-light-bg: #ffffff;
-  --user-light-heading: #0B0F17;
+  --user-light-heading: #0b0f17;
   --user-light-body: #475569;
-  --user-dark-bg: #0B0F17;
+  --user-dark-bg: #0b0f17;
   --user-dark-heading: #f1f5f9;
   --user-dark-body: #cbd5e1;
-  --user-accent: #D31027;
-  --user-accent-dark: #B91C1C;
+  --user-accent: #d31027;
+  --user-accent-dark: #b91c1c;
   --bg-primary: var(--user-light-bg);
   --bg-secondary: #fafafa;
   --bg-tertiary: #f4f5f7;
@@ -248,21 +263,23 @@ h1, h2, h3, h4, h5, h6, p, span, a, label, li, td, th {
   --grid-line: rgba(255, 255, 255, 0.025);
   --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   --card-shadow-hover: 0 20px 40px -20px rgba(0, 0, 0, 0.5), 0 0 30px -10px rgba(211, 16, 39, 0.15);
-  --scroll-track: #0B0F17;
+  --scroll-track: #0b0f17;
   --scroll-thumb: rgba(211, 16, 39, 0.3);
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   overflow-x: hidden;
-  transition: background-color 0.35s ease, color 0.35s ease;
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease;
 }
 
 /* The logo prioritizes Futura where the licensed font is available. */
 .brand-wordmark {
-  font-family: 'Futura', 'Futura PT', 'Century Gothic', 'Questrial', sans-serif;
+  font-family: "Futura", "Futura PT", "Century Gothic", "Questrial", sans-serif;
   font-weight: 500;
   letter-spacing: -0.055em;
 }
@@ -277,11 +294,19 @@ body {
 
 /* Radial glow (hero) */
 .radial-glow {
-  background: radial-gradient(ellipse 80% 50% at 50% -20%, color-mix(in srgb, var(--crimson) 10%, transparent), transparent);
+  background: radial-gradient(
+    ellipse 80% 50% at 50% -20%,
+    color-mix(in srgb, var(--crimson) 10%, transparent),
+    transparent
+  );
 }
 
 .dark .radial-glow {
-  background: radial-gradient(ellipse 80% 50% at 50% -20%, color-mix(in srgb, var(--crimson) 14%, transparent), transparent);
+  background: radial-gradient(
+    ellipse 80% 50% at 50% -20%,
+    color-mix(in srgb, var(--crimson) 14%, transparent),
+    transparent
+  );
 }
 
 /* ─── Cards ───────────────────────────────────────────────── */
@@ -316,7 +341,9 @@ body {
 .glass-card-crimson {
   background: linear-gradient(135deg, rgba(211, 16, 39, 0.03) 0%, rgba(211, 16, 39, 0.01) 100%);
   border: 1px solid var(--crimson-border);
-  box-shadow: var(--card-shadow), 0 0 40px -10px var(--crimson-glow);
+  box-shadow:
+    var(--card-shadow),
+    0 0 40px -10px var(--crimson-glow);
 }
 
 .dark .glass-card-crimson {
@@ -327,7 +354,9 @@ body {
 
 /* ─── Glow effects ────────────────────────────────────────── */
 .crimson-glow {
-  box-shadow: 0 8px 24px -6px rgba(211, 16, 39, 0.30), 0 0 0 1px rgba(211, 16, 39, 0.10);
+  box-shadow:
+    0 8px 24px -6px rgba(211, 16, 39, 0.3),
+    0 0 0 1px rgba(211, 16, 39, 0.1);
 }
 
 .dark .crimson-glow {
@@ -335,7 +364,9 @@ body {
 }
 
 .crimson-glow-lg {
-  box-shadow: 0 12px 32px -6px rgba(211, 16, 39, 0.35), 0 0 0 1px rgba(211, 16, 39, 0.12);
+  box-shadow:
+    0 12px 32px -6px rgba(211, 16, 39, 0.35),
+    0 0 0 1px rgba(211, 16, 39, 0.12);
 }
 
 .dark .crimson-glow-lg {
@@ -344,7 +375,11 @@ body {
 
 /* ─── Hover lift ──────────────────────────────────────────── */
 .hover-lift {
-  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    background-color 0.3s ease;
 }
 
 .hover-lift:hover {
@@ -355,7 +390,9 @@ body {
 
 .dark .hover-lift:hover {
   border-color: rgba(211, 16, 39, 0.4);
-  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.5), 0 0 30px -10px rgba(211, 16, 39, 0.15);
+  box-shadow:
+    0 20px 40px -20px rgba(0, 0, 0, 0.5),
+    0 0 30px -10px rgba(211, 16, 39, 0.15);
 }
 
 /* ─── Buttons ─────────────────────────────────────────────── */
@@ -401,7 +438,7 @@ body {
 
 /* ─── Section label ───────────────────────────────────────── */
 .section-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 0.75rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -414,7 +451,8 @@ body {
 
 /* ─── Process bar animated line ───────────────────────────── */
 .process-line {
-  background: linear-gradient(90deg,
+  background: linear-gradient(
+    90deg,
     rgba(211, 16, 39, 0) 0%,
     rgba(211, 16, 39, 0.5) 20%,
     rgba(211, 16, 39, 0.5) 80%,
@@ -446,17 +484,23 @@ body {
 }
 
 .hover-lift:hover .step-watermark {
-  color: rgba(211, 16, 39, 0.10);
+  color: rgba(211, 16, 39, 0.1);
 }
 
 .dark .hover-lift:hover .step-watermark {
-  color: rgba(211, 16, 39, 0.10);
+  color: rgba(211, 16, 39, 0.1);
 }
 
 /* ─── Fade in animation ───────────────────────────────────── */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .fade-in-up {
@@ -464,8 +508,13 @@ body {
 }
 
 @keyframes subtlePulse {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .pulse-slow {
@@ -490,7 +539,7 @@ body {
 }
 
 .dark .process-circle {
-  background: #0B0F17;
+  background: #0b0f17;
   border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -535,13 +584,17 @@ body {
 }
 
 .dark .mobile-nav {
-  background: #0B0F17;
+  background: #0b0f17;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* ─── Scrollbar ───────────────────────────────────────────── */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--scroll-track); }
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+}
 ::-webkit-scrollbar-thumb {
   background: rgba(211, 16, 39, 0.32);
   border-radius: 4px;
@@ -551,10 +604,18 @@ body {
 }
 
 /* ─── Body text color defaults via CSS vars ───────────────── */
-.text-primary-var { color: var(--text-primary); }
-.text-secondary-var { color: var(--text-secondary); }
-.text-tertiary-var { color: var(--text-tertiary); }
-.text-muted-var { color: var(--text-muted); }
+.text-primary-var {
+  color: var(--text-primary);
+}
+.text-secondary-var {
+  color: var(--text-secondary);
+}
+.text-tertiary-var {
+  color: var(--text-tertiary);
+}
+.text-muted-var {
+  color: var(--text-muted);
+}
 
 /* ─── Selection ───────────────────────────────────────────── */
 ::selection {
@@ -563,12 +624,24 @@ body {
 }
 
 /* Palette-aware utility classes used by the backoffice preview. */
-.brand-accent-text { color: var(--crimson); }
-.brand-accent-bg { background-color: var(--crimson); }
-.brand-accent-border { border-color: var(--crimson-border); }
-.brand-accent-soft { background-color: var(--crimson-soft); }
-.brand-heading { color: var(--text-primary); }
-.brand-copy { color: var(--text-secondary); }
+.brand-accent-text {
+  color: var(--crimson);
+}
+.brand-accent-bg {
+  background-color: var(--crimson);
+}
+.brand-accent-border {
+  border-color: var(--crimson-border);
+}
+.brand-accent-soft {
+  background-color: var(--crimson-soft);
+}
+.brand-heading {
+  color: var(--text-primary);
+}
+.brand-copy {
+  color: var(--text-secondary);
+}
 
 /* The editor is intentionally isolated from the public page styles. */
 .admin-panel {
@@ -599,11 +672,18 @@ body {
   line-height: 1.35;
   outline: none;
   min-width: 0;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.admin-textarea { min-height: 5.5rem; resize: vertical; }
-.admin-input:focus, .admin-textarea:focus, .admin-select:focus {
+.admin-textarea {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+.admin-input:focus,
+.admin-textarea:focus,
+.admin-select:focus {
   border-color: var(--crimson);
   box-shadow: 0 0 0 3px var(--crimson-soft);
 }
@@ -621,17 +701,56 @@ body {
 .admin-tab {
   color: var(--text-tertiary);
   border-bottom: 2px solid transparent;
-  transition: color 0.2s ease, border-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
-.admin-tab:hover { color: var(--text-primary); }
-.admin-tab-active { color: var(--crimson); border-color: var(--crimson); }
+.admin-tab:hover {
+  color: var(--text-primary);
+}
+.admin-tab-active {
+  color: var(--crimson);
+  border-color: var(--crimson);
+}
 
 .asset-dropzone {
   border: 1px dashed var(--border-strong);
   background: var(--bg-secondary);
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
 }
-.asset-dropzone:hover { border-color: var(--crimson); background: var(--crimson-soft); }
+.asset-dropzone:hover {
+  border-color: var(--crimson);
+  background: var(--crimson-soft);
+}
+
+/* ─── Team workstation desktop readability ──────────────────────
+ * Desktop-only (lg+): roomier controls + labels inside the Team
+ * workstation. Scoped under .ws-desk so mobile, tablet and every
+ * other backoffice tab render exactly as before. */
+@media (min-width: 1024px) {
+  .ws-desk .admin-input,
+  .ws-desk .admin-textarea,
+  .ws-desk .admin-select {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.65rem;
+  }
+  .ws-desk .admin-textarea {
+    min-height: 7rem;
+  }
+  .ws-desk .admin-label {
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .ws-desk .asset-dropzone {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+    font-size: 0.875rem;
+  }
+}
 
 /* ─── Hero image visibility ─────────────────────────────────── */
 .hero-media {
@@ -654,11 +773,15 @@ body {
 
 /* Drop shadow utility for headings over images */
 .drop-shadow-hero {
-  text-shadow: 0 2px 16px rgba(255, 255, 255, 0.6), 0 1px 3px rgba(255, 255, 255, 0.3);
+  text-shadow:
+    0 2px 16px rgba(255, 255, 255, 0.6),
+    0 1px 3px rgba(255, 255, 255, 0.3);
 }
 
 .dark .drop-shadow-hero {
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.3);
+  text-shadow:
+    0 2px 16px rgba(0, 0, 0, 0.6),
+    0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* ─── Studio footer ───────────────────────────────────────── */
@@ -672,7 +795,11 @@ body {
   background: var(--bg-primary);
   border: 1px solid var(--border-subtle);
   border-radius: 0.65rem;
-  transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .footer-icon-link:hover {
@@ -682,7 +809,9 @@ body {
   transform: translateY(-2px);
 }
 
-.dark .footer-icon-link { background: rgba(255, 255, 255, 0.025); }
+.dark .footer-icon-link {
+  background: rgba(255, 255, 255, 0.025);
+}
 
 .footer-telemetry-cell {
   min-height: 4.75rem;
@@ -700,7 +829,7 @@ body {
 .footer-kicker {
   display: block;
   color: var(--text-muted);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 0.58rem;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -733,7 +862,9 @@ body {
   color: var(--text-secondary);
   font-size: 0.78rem;
   line-height: 1.55;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .footer-directory-link:hover {
@@ -751,7 +882,9 @@ body {
   transition: color 0.2s ease;
 }
 
-a.footer-contact-row:hover { color: var(--crimson); }
+a.footer-contact-row:hover {
+  color: var(--crimson);
+}
 
 .footer-legal-button {
   width: 100%;
@@ -767,7 +900,9 @@ a.footer-contact-row:hover { color: var(--crimson); }
   transition: color 0.2s ease;
 }
 
-.footer-legal-button:hover { color: var(--crimson); }
+.footer-legal-button:hover {
+  color: var(--crimson);
+}
 
 @media (min-width: 640px) and (max-width: 1279px) {
   .footer-telemetry-cell {
@@ -776,7 +911,7 @@ a.footer-contact-row:hover { color: var(--crimson); }
   .footer-telemetry-cell:nth-child(2n) {
     border-right: 0;
   }
-  .footer-telemetry-cell:nth-last-child(-n+2) {
+  .footer-telemetry-cell:nth-last-child(-n + 2) {
     border-bottom: 0;
   }
 }

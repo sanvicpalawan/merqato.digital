@@ -35,7 +35,7 @@ export function PriorityBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] whitespace-nowrap",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] whitespace-nowrap lg:text-[11px] lg:px-3 lg:py-1.5",
         PRIORITY_TONE[priority],
         className,
       )}
@@ -83,7 +83,7 @@ export function Stamp({ iso, className }: { iso: string; className?: string }) {
     <span
       title={`${formatStamp(iso)}`}
       className={cn(
-        "inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-white/40 whitespace-nowrap",
+        "inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-white/40 whitespace-nowrap lg:text-xs",
         className,
       )}
     >
@@ -107,7 +107,7 @@ export function AuthorChip({
       <span className="w-6 h-6 rounded-full brand-accent-soft brand-accent-text text-[10px] font-bold flex items-center justify-center flex-shrink-0">
         {initials(name)}
       </span>
-      <span className="text-xs font-semibold brand-heading truncate">{name}</span>
+      <span className="text-xs font-semibold brand-heading truncate lg:text-sm">{name}</span>
       <Stamp iso={iso} />
       {action && <span className="ml-auto flex-shrink-0">{action}</span>}
     </div>
@@ -128,17 +128,21 @@ export function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.03] p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Icon className="w-4 h-4 brand-accent-text flex-shrink-0" />
-        <h4 className="text-[11px] font-bold uppercase tracking-[0.1em] brand-heading">{title}</h4>
+    <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.03] p-4 lg:p-6">
+      <div className="flex items-center gap-2 mb-3 lg:mb-4">
+        <Icon className="w-4 h-4 brand-accent-text flex-shrink-0 lg:w-5 lg:h-5" />
+        <h4 className="text-[11px] font-bold uppercase tracking-[0.1em] brand-heading lg:text-sm">
+          {title}
+        </h4>
         {typeof count === "number" && (
           <span className="ml-auto text-[11px] font-semibold text-slate-400 dark:text-white/30">
             {count}
           </span>
         )}
       </div>
-      {hint && <p className="brand-copy text-[11px] leading-relaxed mb-3">{hint}</p>}
+      {hint && (
+        <p className="brand-copy text-[11px] leading-relaxed mb-3 lg:text-sm lg:mb-4">{hint}</p>
+      )}
       {children}
     </section>
   );

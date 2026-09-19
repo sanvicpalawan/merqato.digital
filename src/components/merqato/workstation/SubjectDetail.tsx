@@ -185,7 +185,7 @@ export default function SubjectDetail({
           <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 dark:text-white/30">
             {subject.category || "Subject"}
           </span>
-          <h3 className="text-base font-bold brand-heading break-words leading-tight">
+          <h3 className="text-base font-bold brand-heading break-words leading-tight lg:text-2xl">
             {subject.title}
           </h3>
         </div>
@@ -193,7 +193,7 @@ export default function SubjectDetail({
       </div>
 
       {subject.summary && (
-        <p className="brand-copy text-xs leading-relaxed break-words whitespace-pre-wrap">
+        <p className="brand-copy text-xs leading-relaxed break-words whitespace-pre-wrap lg:text-sm lg:leading-relaxed">
           {subject.summary}
         </p>
       )}
@@ -215,7 +215,7 @@ export default function SubjectDetail({
           <button
             type="button"
             onClick={() => coverInput.current?.click()}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-[11px] font-semibold text-slate-500 dark:text-white/60 hover:border-slate-300 dark:hover:border-white/20 inline-flex items-center gap-1.5"
+            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-[11px] font-semibold lg:text-xs text-slate-500 dark:text-white/60 hover:border-slate-300 dark:hover:border-white/20 inline-flex items-center gap-1.5"
           >
             <ImagePlus className="w-3.5 h-3.5" />
             {coverUrl ? "Replace cover" : "Cover image"}
@@ -297,14 +297,14 @@ export default function SubjectDetail({
                       type="button"
                       disabled={busy}
                       onClick={() => void saveContact()}
-                      className="btn-primary text-white px-4 py-2 rounded-lg text-[11px] font-semibold disabled:opacity-50"
+                      className="btn-primary text-white px-4 py-2 rounded-lg text-[11px] font-semibold lg:text-xs disabled:opacity-50"
                     >
                       Save contact
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditingContact(false)}
-                      className="px-3 py-2 rounded-lg text-[11px] font-semibold text-slate-500 dark:text-white/60 hover:bg-slate-100 dark:hover:bg-white/5"
+                      className="px-3 py-2 rounded-lg text-[11px] font-semibold lg:text-xs text-slate-500 dark:text-white/60 hover:bg-slate-100 dark:hover:bg-white/5"
                     >
                       Cancel
                     </button>
@@ -315,7 +315,7 @@ export default function SubjectDetail({
                   {subject.contactName && (
                     <li className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5">
                       <User className="w-4 h-4 brand-accent-text flex-shrink-0" />
-                      <span className="text-xs font-semibold brand-heading flex-1 min-w-0 truncate">
+                      <span className="text-xs font-semibold brand-heading flex-1 min-w-0 truncate lg:text-sm">
                         {subject.contactName}
                       </span>
                       <IconButton
@@ -335,7 +335,7 @@ export default function SubjectDetail({
                       <Phone className="w-4 h-4 brand-accent-text flex-shrink-0" />
                       <a
                         href={`tel:${subject.contactPhone.replace(/[^+\d]/g, "")}`}
-                        className="text-xs font-semibold brand-heading flex-1 min-w-0 truncate hover:brand-accent-text"
+                        className="text-xs font-semibold brand-heading flex-1 min-w-0 truncate hover:brand-accent-text lg:text-sm"
                       >
                         {subject.contactPhone}
                       </a>
@@ -356,7 +356,7 @@ export default function SubjectDetail({
                       <Mail className="w-4 h-4 brand-accent-text flex-shrink-0" />
                       <a
                         href={`mailto:${subject.contactEmail}`}
-                        className="text-xs font-semibold brand-heading flex-1 min-w-0 truncate hover:brand-accent-text"
+                        className="text-xs font-semibold brand-heading flex-1 min-w-0 truncate hover:brand-accent-text lg:text-sm"
                       >
                         {subject.contactEmail}
                       </a>
@@ -375,7 +375,7 @@ export default function SubjectDetail({
                   {subject.contactAddress && (
                     <li className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5">
                       <MapPin className="w-4 h-4 brand-accent-text flex-shrink-0" />
-                      <span className="text-xs font-semibold brand-heading flex-1 min-w-0 break-words">
+                      <span className="text-xs font-semibold brand-heading flex-1 min-w-0 break-words lg:text-sm">
                         {subject.contactAddress}
                       </span>
                       <IconButton
@@ -394,7 +394,7 @@ export default function SubjectDetail({
                     <button
                       type="button"
                       onClick={openContactEdit}
-                      className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-[11px] font-semibold brand-copy inline-flex items-center justify-center gap-1.5 hover:border-[var(--crimson)]"
+                      className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-[11px] font-semibold lg:text-xs brand-copy inline-flex items-center justify-center gap-1.5 hover:border-[var(--crimson)]"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                       Edit contact
@@ -439,7 +439,7 @@ export default function SubjectDetail({
                       type="button"
                       disabled={busy || !noteBody.trim()}
                       onClick={() => void submitEntry("note")}
-                      className="btn-primary text-white px-3.5 py-2 rounded-lg text-[11px] font-semibold disabled:opacity-50"
+                      className="btn-primary text-white px-3.5 py-2 rounded-lg text-[11px] font-semibold lg:text-xs disabled:opacity-50"
                     >
                       Add note
                     </button>
@@ -468,7 +468,7 @@ export default function SubjectDetail({
                           </IconButton>
                         )}
                       </div>
-                      <p className="text-xs brand-heading leading-relaxed whitespace-pre-wrap break-words">
+                      <p className="text-xs brand-heading leading-relaxed whitespace-pre-wrap break-words lg:text-[0.95rem] lg:leading-relaxed">
                         {note.body}
                       </p>
                       <div className="mt-2.5">
@@ -505,7 +505,7 @@ export default function SubjectDetail({
                         type="button"
                         onClick={() => setLinkKind(kind)}
                         className={cn(
-                          "px-2.5 py-2 rounded-lg border text-[11px] font-semibold inline-flex items-center justify-center gap-1.5 transition-all",
+                          "px-2.5 py-2 rounded-lg border text-[11px] font-semibold lg:text-xs inline-flex items-center justify-center gap-1.5 transition-all",
                           linkKind === kind
                             ? "border-[var(--crimson)] brand-accent-text bg-[var(--crimson-soft)]"
                             : "border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/50",
@@ -541,7 +541,7 @@ export default function SubjectDetail({
                       type="button"
                       disabled={busy || !linkUrl.trim()}
                       onClick={() => void submitLink()}
-                      className="btn-primary text-white px-3.5 py-2.5 rounded-lg text-[11px] font-semibold disabled:opacity-50 flex-shrink-0"
+                      className="btn-primary text-white px-3.5 py-2.5 rounded-lg text-[11px] font-semibold lg:text-xs disabled:opacity-50 flex-shrink-0"
                     >
                       Add
                     </button>
@@ -560,7 +560,7 @@ export default function SubjectDetail({
                       type="button"
                       disabled={busy || parseUrlsBulk(bulkUrls).length === 0}
                       onClick={() => void submitBulk("url")}
-                      className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 text-[11px] font-semibold brand-heading hover:border-[var(--crimson)] disabled:opacity-50"
+                      className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 text-[11px] font-semibold lg:text-xs brand-heading hover:border-[var(--crimson)] disabled:opacity-50"
                     >
                       Save {parseUrlsBulk(bulkUrls).length} web link
                       {parseUrlsBulk(bulkUrls).length === 1 ? "" : "s"}
@@ -589,7 +589,7 @@ export default function SubjectDetail({
                         type="button"
                         disabled={busy || parseUrlsBulk(bulkDriveUrls).length === 0}
                         onClick={() => void submitBulk("drive")}
-                        className="px-3.5 py-2.5 rounded-lg btn-primary text-white text-[11px] font-semibold disabled:opacity-50 flex-shrink-0"
+                        className="px-3.5 py-2.5 rounded-lg btn-primary text-white text-[11px] font-semibold lg:text-xs disabled:opacity-50 flex-shrink-0"
                       >
                         Save {parseUrlsBulk(bulkDriveUrls).length} Drive link
                         {parseUrlsBulk(bulkDriveUrls).length === 1 ? "" : "s"}
@@ -626,11 +626,11 @@ export default function SubjectDetail({
                                   rel="noreferrer noopener"
                                   className="min-w-0 flex-1 group"
                                 >
-                                  <span className="text-xs font-semibold brand-heading break-all group-hover:brand-accent-text">
+                                  <span className="text-xs font-semibold brand-heading break-all group-hover:brand-accent-text lg:text-sm">
                                     {link.label || link.url}
                                   </span>
                                   {link.label && (
-                                    <span className="block text-[11px] text-slate-400 dark:text-white/30 break-all mt-0.5">
+                                    <span className="block text-[11px] text-slate-400 dark:text-white/30 break-all mt-0.5 lg:text-xs">
                                       {link.url}
                                     </span>
                                   )}
@@ -751,7 +751,7 @@ export default function SubjectDetail({
                         )}
                         <figcaption className="p-2">
                           <p
-                            className="text-[11px] font-semibold brand-heading truncate"
+                            className="text-[11px] font-semibold brand-heading truncate lg:text-xs"
                             title={attachment.fileName}
                           >
                             {isVideo ? "🎬 " : ""}
@@ -799,7 +799,7 @@ export default function SubjectDetail({
                       key={entry.id}
                       className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-3"
                     >
-                      <p className="text-xs brand-heading leading-relaxed whitespace-pre-wrap break-words">
+                      <p className="text-xs brand-heading leading-relaxed whitespace-pre-wrap break-words lg:text-[0.95rem] lg:leading-relaxed">
                         {entry.body}
                       </p>
                       <div className="mt-2.5">
@@ -837,7 +837,7 @@ export default function SubjectDetail({
                     type="button"
                     disabled={busy || !comment.trim()}
                     onClick={() => void submitEntry("comment")}
-                    className="btn-primary text-white px-3.5 py-2 rounded-lg text-[11px] font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
+                    className="btn-primary text-white px-3.5 py-2 rounded-lg text-[11px] font-semibold lg:text-xs inline-flex items-center gap-1.5 disabled:opacity-50"
                   >
                     <Send className="w-3.5 h-3.5" />
                     Post comment
