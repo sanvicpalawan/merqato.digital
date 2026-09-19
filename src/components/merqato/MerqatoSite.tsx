@@ -1001,7 +1001,7 @@ function Hero({ settings, heroSrc }: { settings: SiteSettings; heroSrc?: string 
             <span className="absolute bottom-1 left-0 right-0 h-3 brand-accent-soft -skew-x-6 z-0" />
           </span>
         </h1>
-        <p className={`max-w-2xl mx-auto brand-copy text-sm sm:text-base md:text-lg leading-relaxed mb-8 sm:mb-12 fade-in-up rounded-xl px-4 sm:px-6 py-3 break-words ${hasMedia ? 'bg-white/50 dark:bg-[#0B0F17]/50 backdrop-blur-md' : ''}`} style={{ animationDelay: '0.2s' }}>
+        <p className={`max-w-2xl mx-auto brand-copy text-sm sm:text-base md:text-lg leading-relaxed mb-8 sm:mb-12 fade-in-up rounded-xl px-4 sm:px-6 py-3 break-words ${hasMedia ? 'bg-white/75 dark:bg-[#0B0F17]/55' : ''}`} style={{ animationDelay: '0.2s' }}>
           {hero.subtitle}
         </p>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 fade-in-up w-full max-w-md sm:max-w-none mx-auto" style={{ animationDelay: '0.3s' }}>
