@@ -247,19 +247,19 @@ export default function SubjectList({
               placeholder="What the team should know or learn from this subject."
             />
             <div>
-              <span className="admin-label">Cover image (optional)</span>
+              <span className="admin-label">Cover image or video (optional)</span>
               <button
                 type="button"
                 onClick={() => coverInput.current?.click()}
                 className="asset-dropzone w-full rounded-xl px-3 py-4 text-xs brand-copy inline-flex items-center justify-center gap-2"
               >
                 <ImagePlus className="w-4 h-4 brand-accent-text" />
-                {cover ? cover.name : "Upload an image from this device"}
+                {cover ? cover.name : "Upload an image or video from this device"}
               </button>
               <input
                 ref={coverInput}
                 type="file"
-                accept="image/*"
+                accept="image/*,video/*,.mov,.m4v,.avi,.mp4,.webm"
                 className="hidden"
                 onChange={(event) => {
                   setCover(event.target.files?.[0] ?? null);

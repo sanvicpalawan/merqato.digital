@@ -185,7 +185,7 @@ export default function SubjectDetail({
           <input
             ref={coverInput}
             type="file"
-            accept="image/*"
+            accept="image/*,video/*,.mov,.m4v,.avi,.mp4,.webm"
             className="hidden"
             onChange={(event) => {
               const file = event.target.files?.[0];
@@ -206,13 +206,21 @@ export default function SubjectDetail({
         </span>
       </div>
 
-      {coverUrl && (
-        <img
-          src={coverUrl}
-          alt={`${subject.title} cover`}
-          className="w-full h-36 object-cover rounded-2xl border border-slate-200 dark:border-white/10"
-        />
-      )}
+      {coverUrl &&
+        (isVideoAttachment("", subject.coverPath ?? "") ? (
+          <video
+            src={coverUrl}
+            controls
+            preload="metadata"
+            className="w-full h-36 object-cover rounded-2xl border border-slate-200 dark:border-white/10 bg-black"
+          />
+        ) : (
+          <img
+            src={coverUrl}
+            alt={`${subject.title} cover`}
+            className="w-full h-36 object-cover rounded-2xl border border-slate-200 dark:border-white/10"
+          />
+        ))}
 
       {/* ── Notes ─────────────────────────────────────────── */}
       <SectionCard
