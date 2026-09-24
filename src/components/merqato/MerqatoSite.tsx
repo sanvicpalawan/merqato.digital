@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   BatteryCharging,
   Bot,
+  Briefcase,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -52,11 +53,37 @@ import {
   uploadCloudAsset,
 } from "@/lib/site-cloud";
 import TeamWorkstation from "./workstation/TeamWorkstation";
+import PortfolioSection from "./portfolio/PortfolioSection";
+import {
+  DEFAULT_PORTFOLIO,
+  PORTFOLIO_LINK_PRESETS,
+  PORTFOLIO_STATUS_LABEL,
+  PORTFOLIO_STATUS_OPTIONS,
+  createPortfolioProject,
+  newId as newPortfolioId,
+  normalizePortfolio,
+  portfolioAssetIds,
+  type PortfolioAccount,
+  type PortfolioLink,
+  type PortfolioLinkKind,
+  type PortfolioMedia,
+  type PortfolioProject,
+  type PortfolioSettings,
+  type PortfolioStatus,
+} from "./portfolio/portfolio-data";
 
 type Theme = "light" | "dark";
 type MediaType = "image" | "video";
 type AdminTab =
-  "content" | "media" | "design" | "packages" | "faq" | "footer" | "languages" | "team";
+  | "content"
+  | "media"
+  | "design"
+  | "packages"
+  | "faq"
+  | "footer"
+  | "languages"
+  | "portfolio"
+  | "team";
 type CloudState = "local" | "connecting" | "ready" | "published" | "unauthenticated" | "error";
 type Pillar = { title: string; description: string; points: string[] };
 type ServicePackage = {
@@ -111,6 +138,9 @@ export type LocalizedContent = {
   processTitle?: string;
   processSubtitle?: string;
   processSteps?: string[];
+  portfolioEyebrow?: string;
+  portfolioTitle?: string;
+  portfolioSubtitle?: string;
   faqEyebrow?: string;
   faqTitle?: string;
   faqItems?: FaqItem[];
@@ -153,6 +183,7 @@ type SiteSettings = {
   pillars: { eyebrow: string; title: string; subtitle: string; items: Pillar[] };
   packages: { eyebrow: string; title: string; subtitle: string; items: ServicePackage[] };
   process: { eyebrow: string; title: string; subtitle: string; steps: string[] };
+  portfolio: PortfolioSettings;
   faq: { eyebrow: string; title: string; items: FaqItem[] };
   footer: {
     eyebrow: string;
@@ -210,7 +241,7 @@ const DEFAULT_LANGUAGES: LanguageConfig[] = [
 
 const TAGALOG_DEFAULT_TRANSLATION: LocalizedContent = {
   tagline: "Pagtatayo ng mga Sistemang Operasyunal Mula sa Paraiso",
-  headerLinks: ["Mga Haligi", "Mga Package", "Proseso"],
+  headerLinks: ["Mga Haligi", "Mga Package", "Proseso", "Portfolio"],
   headerCta: "Buuin ang Iyong Sistema",
   heroBadge: "Palawan, Pilipinas | Pang-Daigdigang Kakayahan",
   heroTitleLineOne: "Pagtatayo ng mga Sistemang",
@@ -330,7 +361,11 @@ const TAGALOG_DEFAULT_TRANSLATION: LocalizedContent = {
     "Pagpapatupad at Integrasyon",
     "Patuloy na Pinamamahalaang Operasyon",
   ],
-  faqEyebrow: "05 / Mga Madalas Itanong",
+  portfolioEyebrow: "05 / Portfolio",
+  portfolioTitle: "Mga Sistemang Aming Naipadala",
+  portfolioSubtitle:
+    "Mga piling proyekto sa resorts, tours at island operations — mga website, automation agent at backend na nagpapatakbo sa kanila.",
+  faqEyebrow: "06 / Mga Madalas Itanong",
   faqTitle: "Mga Madalas Itanong",
   faqItems: [
     {
@@ -364,7 +399,7 @@ const TAGALOG_DEFAULT_TRANSLATION: LocalizedContent = {
 
 const DEFAULT_SETTINGS: SiteSettings = {
   branding: { name: "merQato.digital", tagline: "Building Operational Systems from Paradise" },
-  header: { links: ["Pillars", "Packages", "Process"], cta: "Build Your System" },
+  header: { links: ["Pillars", "Packages", "Process", "Portfolio"], cta: "Build Your System" },
   hero: {
     badge: "Palawan, Philippines | Global Capability",
     titleLineOne: "Building Operational",
@@ -487,8 +522,9 @@ const DEFAULT_SETTINGS: SiteSettings = {
       "Ongoing Managed Operations",
     ],
   },
+  portfolio: DEFAULT_PORTFOLIO,
   faq: {
-    eyebrow: "05 / FAQ",
+    eyebrow: "06 / FAQ",
     title: "Frequently Asked Questions",
     items: [
       {
@@ -580,6 +616,7 @@ function normalizeSettings(saved?: Partial<SiteSettings> | null): SiteSettings {
     pillars: { ...base.pillars, ...saved.pillars },
     packages: { ...base.packages, ...saved.packages },
     process: { ...base.process, ...saved.process },
+    portfolio: saved.portfolio ? normalizePortfolio(saved.portfolio) : base.portfolio,
     faq: { ...base.faq, ...saved.faq },
     footer: {
       ...base.footer,
@@ -657,6 +694,12 @@ function getEffectiveSettings(settings: SiteSettings, lang: string): SiteSetting
       subtitle: trans.processSubtitle ?? settings.process.subtitle,
       steps: trans.processSteps ?? settings.process.steps,
     },
+    portfolio: {
+      ...settings.portfolio,
+      eyebrow: trans.portfolioEyebrow ?? settings.portfolio.eyebrow,
+      title: trans.portfolioTitle ?? settings.portfolio.title,
+      subtitle: trans.portfolioSubtitle ?? settings.portfolio.subtitle,
+    },
     faq: {
       ...settings.faq,
       eyebrow: trans.faqEyebrow ?? settings.faq.eyebrow,
@@ -709,6 +752,9 @@ function getEditingValues(settings: SiteSettings, lang: string): LocalizedConten
     processTitle: settings.process.title,
     processSubtitle: settings.process.subtitle,
     processSteps: settings.process.steps,
+    portfolioEyebrow: settings.portfolio.eyebrow,
+    portfolioTitle: settings.portfolio.title,
+    portfolioSubtitle: settings.portfolio.subtitle,
     faqEyebrow: settings.faq.eyebrow,
     faqTitle: settings.faq.title,
     faqItems: settings.faq.items,
@@ -793,6 +839,12 @@ function updateLocalizedContent(
         title: updated.processTitle ?? settings.process.title,
         subtitle: updated.processSubtitle ?? settings.process.subtitle,
         steps: updated.processSteps ?? settings.process.steps,
+      },
+      portfolio: {
+        ...settings.portfolio,
+        eyebrow: updated.portfolioEyebrow ?? settings.portfolio.eyebrow,
+        title: updated.portfolioTitle ?? settings.portfolio.title,
+        subtitle: updated.portfolioSubtitle ?? settings.portfolio.subtitle,
       },
       faq: {
         ...settings.faq,
@@ -992,6 +1044,7 @@ function useAssetUrls(settings: SiteSettings) {
     settings.hero.assetId,
     settings.about.assetId,
     settings.footer.assetId,
+    ...portfolioAssetIds(settings.portfolio),
   ]
     .filter(Boolean)
     .join("|");
@@ -1242,7 +1295,7 @@ function Navigation({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const routes = ["#pillars", "#packages", "#process"];
+  const routes = ["#pillars", "#packages", "#process", "#portfolio"];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -2096,6 +2149,7 @@ const UI_STRINGS: Record<
       ["Pillars", "#pillars"],
       ["Reviews", "#about"],
       ["Pricing", "#packages"],
+      ["Portfolio", "#portfolio"],
       ["FAQ", "#faq"],
       ["Inquiry", "#contact"],
     ],
@@ -2131,6 +2185,7 @@ const UI_STRINGS: Record<
       ["Mga Haligi", "#pillars"],
       ["Mga Puna", "#about"],
       ["Presyo", "#packages"],
+      ["Portfolio", "#portfolio"],
       ["FAQ", "#faq"],
       ["Pagtatanong", "#contact"],
     ],
@@ -2943,6 +2998,8 @@ function Backoffice({
   onClose,
   onUpload,
   onClearAsset,
+  onPortfolioUpload,
+  onPortfolioRemove,
   onReset,
   cloudState,
   userEmail,
@@ -2956,6 +3013,8 @@ function Backoffice({
   onClose: () => void;
   onUpload: (slot: "logo" | "hero" | "about" | "footer", file: File) => void;
   onClearAsset: (slot: "logo" | "hero" | "about" | "footer") => void;
+  onPortfolioUpload: (file: File) => Promise<{ id: string; type: MediaType } | null>;
+  onPortfolioRemove: (assetId: string) => void;
   onReset: () => void;
   cloudState: CloudState;
   userEmail?: string;
@@ -2973,6 +3032,7 @@ function Backoffice({
     { id: "media", label: "Media", icon: ImagePlus },
     { id: "design", label: "Design", icon: Palette },
     { id: "packages", label: "Packages", icon: SlidersHorizontal },
+    { id: "portfolio", label: "Portfolio", icon: Briefcase },
     { id: "faq", label: "FAQ", icon: ChevronDown },
     { id: "footer", label: "Footer", icon: Mail },
     { id: "languages", label: "Languages", icon: Languages },
@@ -3040,8 +3100,8 @@ function Backoffice({
           </div>
         </div>
 
-        {/* Responsive Tabs (4 cols on mobile, 8 on desktop) - zero horizontal scroll */}
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-1 pb-3 w-full">
+        {/* Responsive Tabs - zero horizontal scroll, 9 tabs now */}
+        <div className="grid grid-cols-3 sm:grid-cols-9 gap-1 pb-3 w-full">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -3116,6 +3176,16 @@ function Backoffice({
         {tab === "faq" && <FaqEditor settings={settings} update={update} editLang={editLang} />}
         {tab === "footer" && (
           <FooterEditor settings={settings} update={update} editLang={editLang} />
+        )}
+        {tab === "portfolio" && (
+          <PortfolioEditor
+            settings={settings}
+            update={update}
+            editLang={editLang}
+            assetUrls={assetUrls}
+            onUploadMedia={onPortfolioUpload}
+            onRemoveAsset={onPortfolioRemove}
+          />
         )}
         {tab === "languages" && (
           <LanguagesEditor
@@ -4286,6 +4356,565 @@ function LanguagesEditor({
   );
 }
 
+
+function PortfolioEditor({
+  settings,
+  update,
+  editLang,
+  assetUrls,
+  onUploadMedia,
+  onRemoveAsset,
+}: {
+  settings: SiteSettings;
+  update: (callback: (current: SiteSettings) => SiteSettings) => void;
+  editLang: string;
+  assetUrls: Record<string, string>;
+  onUploadMedia: (file: File) => Promise<{ id: string; type: MediaType } | null>;
+  onRemoveAsset: (assetId: string) => void;
+}) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
+  const values = getEditingValues(settings, editLang);
+  const setField = (field: keyof LocalizedContent, val: any) => {
+    update((current) =>
+      updateLocalizedContent(current, editLang, (prev) => ({ ...prev, [field]: val })),
+    );
+  };
+
+  const updatePortfolio = (updater: (p: PortfolioSettings) => PortfolioSettings) => {
+    update((current) => ({ ...current, portfolio: updater(current.portfolio) }));
+  };
+
+  const portfolio = settings.portfolio;
+
+  const filtered = portfolio.items.filter((item) => {
+    if (!filter.trim()) return true;
+    const q = filter.toLowerCase();
+    return (
+      item.title.toLowerCase().includes(q) ||
+      item.client.toLowerCase().includes(q) ||
+      item.tags.join(" ").toLowerCase().includes(q) ||
+      item.status.toLowerCase().includes(q)
+    );
+  });
+
+  const handleAddAccount = () => {
+    const newAcc: PortfolioAccount = {
+      id: newPortfolioId(),
+      name: "New Account",
+      role: "Build & maintenance",
+    };
+    updatePortfolio((p) => ({ ...p, accounts: [...p.accounts, newAcc] }));
+  };
+
+  const handleAddProject = () => {
+    const proj = createPortfolioProject();
+    proj.title = `Project ${portfolio.items.length + 1}`;
+    updatePortfolio((p) => ({ ...p, items: [proj, ...p.items] }));
+    setExpandedId(proj.id);
+  };
+
+  return (
+    <>
+      <EditorGroup title="Portfolio Heading">
+        <InputField
+          label="Section label"
+          value={values.portfolioEyebrow || ""}
+          onChange={(v) => setField("portfolioEyebrow", v)}
+        />
+        <InputField
+          label="Section title"
+          value={values.portfolioTitle || ""}
+          onChange={(v) => setField("portfolioTitle", v)}
+        />
+        <InputField
+          label="Section intro"
+          multiline
+          value={values.portfolioSubtitle || ""}
+          onChange={(v) => setField("portfolioSubtitle", v)}
+        />
+      </EditorGroup>
+
+      <EditorGroup title="Accounts / Studios">
+        <p className="brand-copy text-xs leading-relaxed -mt-2 mb-3 break-words">
+          Accounts group projects by client studio or internal team. Assign a project to an account to show the owner in the case-study modal.
+        </p>
+        <div className="space-y-3">
+          {portfolio.accounts.map((acc, idx) => (
+            <div
+              key={acc.id}
+              className="rounded-xl border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02] space-y-2"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-mono font-bold brand-accent-text">ACCOUNT {idx + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!confirm(`Remove account "${acc.name}"? Projects using it will become unassigned.`)) return;
+                    updatePortfolio((p) => ({
+                      ...p,
+                      accounts: p.accounts.filter((a) => a.id !== acc.id),
+                    }));
+                  }}
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <InputField
+                  label="Name"
+                  value={acc.name}
+                  onChange={(v) =>
+                    updatePortfolio((p) => ({
+                      ...p,
+                      accounts: p.accounts.map((a) => (a.id === acc.id ? { ...a, name: v } : a)),
+                    }))
+                  }
+                />
+                <InputField
+                  label="Role / Note"
+                  value={acc.role}
+                  onChange={(v) =>
+                    updatePortfolio((p) => ({
+                      ...p,
+                      accounts: p.accounts.map((a) => (a.id === acc.id ? { ...a, role: v } : a)),
+                    }))
+                  }
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={handleAddAccount}
+          className="btn-secondary mt-3 px-3 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-2 cursor-pointer"
+        >
+          <Users className="w-3.5 h-3.5 brand-accent-text" /> Add account
+        </button>
+      </EditorGroup>
+
+      <EditorGroup title="Projects">
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
+          <input
+            className="admin-input flex-1"
+            placeholder="Filter projects by title, client, tag"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={handleAddProject}
+            className="btn-primary text-white px-4 py-2 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
+          >
+            <Briefcase className="w-4 h-4" /> New project
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {filtered.map((project) => {
+            const expanded = expandedId === project.id;
+            const cover = project.media.find((m) => m.cover) ?? project.media[0];
+            return (
+              <div
+                key={project.id}
+                className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111827] shadow-sm overflow-hidden"
+              >
+                <button
+                  type="button"
+                  onClick={() => setExpandedId(expanded ? null : project.id)}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold brand-heading truncate">{project.title}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full border bg-slate-50 dark:bg-white/5 brand-copy uppercase">
+                        {PORTFOLIO_STATUS_LABEL[project.status]}
+                      </span>
+                      {project.featured && (
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--crimson)] text-white font-bold uppercase">Featured</span>
+                      )}
+                      {!project.published && (
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-white/10 brand-copy font-bold uppercase">Draft</span>
+                      )}
+                    </div>
+                    <p className="text-[11px] brand-copy truncate mt-0.5">{project.tagline} • {project.client || "No client"} • {project.year}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {cover && assetUrls[cover.assetId] && (
+                      <img src={assetUrls[cover.assetId]} alt="" className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-white/10" />
+                    )}
+                    <ChevronDown className={`w-4 h-4 brand-copy transition-transform ${expanded ? "rotate-180" : ""}`} />
+                  </div>
+                </button>
+
+                {expanded && (
+                  <div className="px-4 pb-5 pt-3 border-t border-slate-200 dark:border-white/10 space-y-5 bg-slate-50/30 dark:bg-white/[0.01]">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <InputField label="Title" value={project.title} onChange={(v) => updatePortfolio((p) => ({ ...p, items: p.items.map((it) => (it.id === project.id ? { ...it, title: v } : it)) }))} />
+                      <InputField label="Tagline (Industry / Platform)" value={project.tagline} onChange={(v) => updatePortfolio((p) => ({ ...p, items: p.items.map((it) => (it.id === project.id ? { ...it, tagline: v } : it)) }))} />
+                      <InputField label="Client" value={project.client} onChange={(v) => updatePortfolio((p) => ({ ...p, items: p.items.map((it) => (it.id === project.id ? { ...it, client: v } : it)) }))} />
+                      <InputField label="Year" value={project.year} onChange={(v) => updatePortfolio((p) => ({ ...p, items: p.items.map((it) => (it.id === project.id ? { ...it, year: v } : it)) }))} />
+                      <label className="block">
+                        <span className="admin-label">Status</span>
+                        <select
+                          className="admin-select"
+                          value={project.status}
+                          onChange={(e) =>
+                            updatePortfolio((p) => ({
+                              ...p,
+                              items: p.items.map((it) => (it.id === project.id ? { ...it, status: e.target.value as PortfolioStatus } : it)),
+                            }))
+                          }
+                        >
+                          {PORTFOLIO_STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>{PORTFOLIO_STATUS_LABEL[s]}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className="admin-label">Account</span>
+                        <select
+                          className="admin-select"
+                          value={project.accountId}
+                          onChange={(e) =>
+                            updatePortfolio((p) => ({
+                              ...p,
+                              items: p.items.map((it) => (it.id === project.id ? { ...it, accountId: e.target.value } : it)),
+                            }))
+                          }
+                        >
+                          <option value="">Unassigned</option>
+                          {portfolio.accounts.map((acc) => (
+                            <option key={acc.id} value={acc.id}>{acc.name}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4">
+                      <label className="flex items-center gap-2 text-xs brand-copy cursor-pointer">
+                        <input type="checkbox" checked={project.featured} onChange={(e) => updatePortfolio((p) => ({ ...p, items: p.items.map((it) => (it.id === project.id ? { ...it, featured: e.target.checked } : it)) }))} className="accent-[var(--crimson)]" />
+                        <span>Featured (highlighted on site)</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-xs brand-copy cursor-pointer">
+                        <input type="checkbox" checked={project.published} onChange={(e) => updatePortfolio((p) => ({ ...p, items: p.items.map((it) => (it.id === project.id ? { ...it, published: e.target.checked } : it)) }))} className="accent-[var(--crimson)]" />
+                        <span>Published (visible on site)</span>
+                      </label>
+                    </div>
+
+                    <InputField label="Summary (card)" multiline value={project.summary} onChange={(v) => updatePortfolio((p) => ({ ...p, items: p.items.map((it) => (it.id === project.id ? { ...it, summary: v } : it)) }))} />
+                    <InputField label="Challenge" multiline value={project.challenge} onChange={(v) => updatePortfolio((p) => ({ ...p, items: p.items.map((it) => (it.id === project.id ? { ...it, challenge: v } : it)) }))} />
+                    <InputField label="Solution" multiline value={project.solution} onChange={(v) => updatePortfolio((p) => ({ ...p, items: p.items.map((it) => (it.id === project.id ? { ...it, solution: v } : it)) }))} />
+                    <InputField label="Impact" multiline value={project.impact} onChange={(v) => updatePortfolio((p) => ({ ...p, items: p.items.map((it) => (it.id === project.id ? { ...it, impact: v } : it)) }))} />
+
+                    <div>
+                      <span className="admin-label">Tags / Stack</span>
+                      <textarea
+                        className="admin-textarea"
+                        value={project.tags.join("\n")}
+                        onChange={(e) =>
+                          updatePortfolio((p) => ({
+                            ...p,
+                            items: p.items.map((it) =>
+                              it.id === project.id ? { ...it, tags: e.target.value.split(/[\n,]+/).map((t) => t.trim()).filter(Boolean) } : it,
+                            ),
+                          }))
+                        }
+                        placeholder="One tag per line or comma separated: TanStack Start, Supabase, WhatsApp API"
+                      />
+                      <span className="block mt-1 text-[11px] text-slate-500 dark:text-white/40">One per line or comma separated. First 4 show on cards.</span>
+                    </div>
+
+                    {/* Media Manager */}
+                    <div className="rounded-xl border border-slate-200 dark:border-white/10 p-3 sm:p-4 bg-white dark:bg-[#0B0F17]">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <h4 className="text-xs font-bold brand-heading">Media (images & videos)</h4>
+                        <span className="text-[11px] brand-copy">{project.media.length} files</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+                        {project.media.map((m, mIdx) => (
+                          <div key={m.id} className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02]">
+                            <div className="aspect-video relative bg-slate-100 dark:bg-white/[0.03]">
+                              {assetUrls[m.assetId] ? (
+                                m.type === "video" ? (
+                                  <video src={assetUrls[m.assetId]} className="absolute inset-0 w-full h-full object-cover" muted />
+                                ) : (
+                                  <img src={assetUrls[m.assetId]} alt={m.caption || project.title} className="absolute inset-0 w-full h-full object-cover" />
+                                )
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-[10px] brand-copy">No preview</div>
+                              )}
+                              {m.cover && (
+                                <span className="absolute left-2 top-2 text-[9px] font-bold px-2 py-0.5 rounded-full bg-[var(--crimson)] text-white">COVER</span>
+                              )}
+                            </div>
+                            <div className="p-2 space-y-2">
+                              <input
+                                className="w-full h-7 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-2 text-[11px] brand-heading outline-none"
+                                placeholder="Caption"
+                                value={m.caption}
+                                onChange={(e) =>
+                                  updatePortfolio((p) => ({
+                                    ...p,
+                                    items: p.items.map((it) =>
+                                      it.id === project.id
+                                        ? { ...it, media: it.media.map((med) => (med.id === m.id ? { ...med, caption: e.target.value } : med)) }
+                                        : it,
+                                    ),
+                                  }))
+                                }
+                              />
+                              <div className="flex gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updatePortfolio((p) => ({
+                                      ...p,
+                                      items: p.items.map((it) =>
+                                        it.id === project.id
+                                          ? { ...it, media: it.media.map((med) => ({ ...med, cover: med.id === m.id })) }
+                                          : it,
+                                      ),
+                                    }))
+                                  }
+                                  className={`flex-1 h-7 rounded-md text-[10px] font-bold cursor-pointer ${m.cover ? "bg-[var(--crimson)] text-white" : "bg-slate-100 dark:bg-white/10 brand-copy"}`}
+                                >
+                                  Cover
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (mIdx > 0) {
+                                      updatePortfolio((p) => ({
+                                        ...p,
+                                        items: p.items.map((it) => {
+                                          if (it.id !== project.id) return it;
+                                          const arr = [...it.media];
+                                          const tmp = arr[mIdx - 1];
+                                          arr[mIdx - 1] = arr[mIdx];
+                                          arr[mIdx] = tmp;
+                                          return { ...it, media: arr };
+                                        }),
+                                      }));
+                                    }
+                                  }}
+                                  className="w-7 h-7 rounded-md bg-slate-100 dark:bg-white/10 flex items-center justify-center cursor-pointer"
+                                  title="Move left"
+                                >
+                                  ‹
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    onRemoveAsset(m.assetId);
+                                    updatePortfolio((p) => ({
+                                      ...p,
+                                      items: p.items.map((it) =>
+                                        it.id === project.id ? { ...it, media: it.media.filter((med) => med.id !== m.id) } : it,
+                                      ),
+                                    }));
+                                  }}
+                                  className="w-7 h-7 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-600 flex items-center justify-center cursor-pointer"
+                                  title="Remove"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <label className="btn-secondary w-full py-2.5 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-2 cursor-pointer">
+                        <Upload className="w-4 h-4 brand-accent-text" />
+                        Upload images / videos from device
+                        <input
+                          type="file"
+                          accept="image/*,video/*"
+                          multiple
+                          className="hidden"
+                          onChange={async (e) => {
+                            const files = Array.from(e.target.files || []);
+                            if (files.length === 0) return;
+                            for (const file of files) {
+                              const result = await onUploadMedia(file);
+                              if (!result) continue;
+                              const media: PortfolioMedia = {
+                                id: newPortfolioId(),
+                                assetId: result.id,
+                                type: result.type as any,
+                                caption: "",
+                                cover: project.media.length === 0,
+                              };
+                              updatePortfolio((p) => ({
+                                ...p,
+                                items: p.items.map((it) => (it.id === project.id ? { ...it, media: [...it.media, media] } : it)),
+                              }));
+                            }
+                            e.currentTarget.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Links Manager */}
+                    <div className="rounded-xl border border-slate-200 dark:border-white/10 p-3 sm:p-4 bg-white dark:bg-[#0B0F17]">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <h4 className="text-xs font-bold brand-heading">Links (multiple, labeled)</h4>
+                        <span className="text-[11px] brand-copy">{project.links.length} links</span>
+                      </div>
+
+                      <div className="space-y-3 mb-3">
+                        {project.links.map((link) => (
+                          <div key={link.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-2.5 bg-slate-50/50 dark:bg-white/[0.02] space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[10px] font-mono font-bold brand-accent-text uppercase">{link.kind}</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updatePortfolio((p) => ({
+                                    ...p,
+                                    items: p.items.map((it) =>
+                                      it.id === project.id ? { ...it, links: it.links.filter((l) => l.id !== link.id) } : it,
+                                    ),
+                                  }))
+                                }
+                                className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-2">
+                              <label className="block">
+                                <span className="admin-label">Kind</span>
+                                <select
+                                  className="admin-select"
+                                  value={link.kind}
+                                  onChange={(e) =>
+                                    updatePortfolio((p) => ({
+                                      ...p,
+                                      items: p.items.map((it) =>
+                                        it.id === project.id ? { ...it, links: it.links.map((l) => (l.id === link.id ? { ...l, kind: e.target.value as PortfolioLinkKind } : l)) } : it,
+                                      ),
+                                    }))
+                                  }
+                                >
+                                  {PORTFOLIO_LINK_PRESETS.map((preset) => (
+                                    <option key={preset.kind} value={preset.kind}>{preset.label}</option>
+                                  ))}
+                                </select>
+                              </label>
+                              <InputField
+                                label="Label"
+                                value={link.label}
+                                onChange={(v) =>
+                                  updatePortfolio((p) => ({
+                                    ...p,
+                                    items: p.items.map((it) =>
+                                      it.id === project.id ? { ...it, links: it.links.map((l) => (l.id === link.id ? { ...l, label: v } : l)) } : it,
+                                    ),
+                                  }))
+                                }
+                              />
+                            </div>
+                            <InputField
+                              label="URL"
+                              value={link.url}
+                              onChange={(v) =>
+                                updatePortfolio((p) => ({
+                                  ...p,
+                                  items: p.items.map((it) =>
+                                    it.id === project.id ? { ...it, links: it.links.map((l) => (l.id === link.id ? { ...l, url: v } : l)) } : it,
+                                  ),
+                                }))
+                              }
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {PORTFOLIO_LINK_PRESETS.slice(0, 5).map((preset) => (
+                          <button
+                            key={preset.kind}
+                            type="button"
+                            onClick={() =>
+                              updatePortfolio((p) => ({
+                                ...p,
+                                items: p.items.map((it) =>
+                                  it.id === project.id
+                                    ? {
+                                        ...it,
+                                        links: [
+                                          ...it.links,
+                                          { id: newPortfolioId(), kind: preset.kind, label: preset.label, url: "https://" },
+                                        ],
+                                      }
+                                    : it,
+                                ),
+                              }))
+                            }
+                            className="btn-secondary px-2.5 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer"
+                          >
+                            + {preset.label}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updatePortfolio((p) => ({
+                              ...p,
+                              items: p.items.map((it) =>
+                                it.id === project.id
+                                  ? {
+                                      ...it,
+                                      links: [...it.links, { id: newPortfolioId(), kind: "custom", label: "Custom Link", url: "https://" }],
+                                    }
+                                  : it,
+                              ),
+                            }))
+                          }
+                          className="btn-secondary px-2.5 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer"
+                        >
+                          + Custom
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!confirm(`Delete project "${project.title}"? This cannot be undone.`)) return;
+                          // remove its assets
+                          project.media.forEach((m) => onRemoveAsset(m.assetId));
+                          updatePortfolio((p) => ({ ...p, items: p.items.filter((it) => it.id !== project.id) }));
+                        }}
+                        className="text-xs font-semibold text-rose-600 hover:text-rose-700 inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" /> Delete project
+                      </button>
+                      <span className="text-[10px] font-mono brand-copy">ID: {project.id.slice(0, 8)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {filtered.length === 0 && (
+            <p className="brand-copy text-xs text-center py-6">No projects match "{filter}".</p>
+          )}
+        </div>
+      </EditorGroup>
+    </>
+  );
+}
+
+
 export default function MerqatoSite() {
   const [theme, toggleTheme] = useTheme();
   const [settings, setSettings, cloudState, publish] = useSiteSettings();
@@ -4382,6 +5011,30 @@ export default function MerqatoSite() {
     });
   };
 
+  const uploadPortfolioMedia = async (file: File): Promise<{ id: string; type: MediaType } | null> => {
+    const allowed = file.type.startsWith("image/") || file.type.startsWith("video/");
+    if (!allowed) {
+      window.alert(`File "${file.name}" must be an image or video.`);
+      return null;
+    }
+    try {
+      const id = isSupabaseConfigured ? await uploadCloudAsset(file) : await saveAsset(file);
+      const type: MediaType = file.type.startsWith("video/") ? "video" : "image";
+      return { id, type };
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? `Unable to upload asset: ${error.message}` : "Unable to upload asset.",
+      );
+      return null;
+    }
+  };
+
+  const removePortfolioAsset = (assetId: string) => {
+    if (!assetId) return;
+    const remove = assetId.startsWith("remote:") ? removeCloudAsset(assetId) : removeAsset(assetId);
+    remove.catch(() => undefined);
+  };
+
   const cloudSignIn = async (email: string, password: string) => {
     if (!supabase) return "Supabase is not configured.";
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -4436,6 +5089,7 @@ export default function MerqatoSite() {
         <Pillars settings={effectiveSettings} />
         <Packages settings={effectiveSettings} currentLang={visitorLang} />
         <Process settings={effectiveSettings} />
+        <PortfolioSection portfolio={effectiveSettings.portfolio} headingFont={effectiveSettings.fonts.heading} />
         <FAQ settings={effectiveSettings} />
         <FooterCTA
           settings={effectiveSettings}
@@ -4470,6 +5124,8 @@ export default function MerqatoSite() {
           onClose={() => setAdminOpen(false)}
           onUpload={uploadAsset}
           onClearAsset={clearAsset}
+          onPortfolioUpload={uploadPortfolioMedia}
+          onPortfolioRemove={removePortfolioAsset}
           onReset={resetSite}
           cloudState={cloudState}
           userEmail={cloudUserEmail}
