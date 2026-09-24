@@ -105,7 +105,7 @@ export const createPortfolioProject = (): PortfolioProject => ({
 });
 
 export const DEFAULT_PORTFOLIO: PortfolioSettings = {
-  eyebrow: "04 / Portfolio",
+  eyebrow: "05 / Portfolio",
   title: "Systems We Have Shipped",
   subtitle:
     "Selected builds across resorts, tours and island operations — websites, automation agents and the backends that keep them running.",
