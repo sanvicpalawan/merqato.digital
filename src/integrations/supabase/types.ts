@@ -173,10 +173,55 @@ export type Database = {
           },
         ]
       }
+      workstation_socials: {
+        Row: {
+          author_token: string
+          created_at: string
+          created_by: string
+          id: string
+          label: string | null
+          platform: string
+          subject_id: string
+          url: string
+        }
+        Insert: {
+          author_token: string
+          created_at?: string
+          created_by: string
+          id?: string
+          label?: string | null
+          platform: string
+          subject_id: string
+          url: string
+        }
+        Update: {
+          author_token?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          label?: string | null
+          platform?: string
+          subject_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workstation_socials_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "workstation_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workstation_subjects: {
         Row: {
           author_token: string
           category: string | null
+          contact_address: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           cover_path: string | null
           created_at: string
           created_by: string
@@ -189,6 +234,10 @@ export type Database = {
         Insert: {
           author_token: string
           category?: string | null
+          contact_address?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           cover_path?: string | null
           created_at?: string
           created_by: string
@@ -201,6 +250,10 @@ export type Database = {
         Update: {
           author_token?: string
           category?: string | null
+          contact_address?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           cover_path?: string | null
           created_at?: string
           created_by?: string
