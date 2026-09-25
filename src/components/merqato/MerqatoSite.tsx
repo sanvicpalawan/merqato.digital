@@ -4529,7 +4529,7 @@ function PortfolioEditor({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs font-bold brand-heading truncate">{project.title}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full border ${project.status === "live" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : project.status === "development" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" : "bg-slate-50 dark:bg-white/5 brand-copy"} uppercase">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full border uppercase ${project.status === "live" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : project.status === "development" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" : "bg-slate-50 dark:bg-white/5 brand-copy"}`}>
                         {PORTFOLIO_STATUS_LABEL[project.status]}
                       </span>
                       {project.featured && (
@@ -4670,22 +4670,6 @@ function PortfolioEditor({
                               <div className="flex gap-1">
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    updatePortfolio((p) => ({
-                                      ...p,
-                                      items: p.items.map((it) =>
-                                        it.id === project.id
-                                          ? { ...it, media: it.media.map((med) => ({ ...med, cover: med.id === m.id })) }
-                                          : it,
-                                      ),
-                                    }))
-                                  }
-                                  className={`flex-1 h-7 rounded-md text-[10px] font-bold cursor-pointer ${m.cover ? "bg-[var(--crimson)] text-white" : "bg-slate-100 dark:bg-white/10 brand-copy"}`}
-                                >
-                                  Cover
-                                </button>
-                                <button
-                                  type="button"
                                   onClick={() => {
                                     if (mIdx > 0) {
                                       updatePortfolio((p) => ({
@@ -4703,6 +4687,9 @@ function PortfolioEditor({
                                   }}
                                   className="w-7 h-7 rounded-md bg-slate-100 dark:bg-white/10 flex items-center justify-center cursor-pointer"
                                   title="Move left"
+                                >
+                                  ‹
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -4724,9 +4711,6 @@ function PortfolioEditor({
                                   title="Move right"
                                 >
                                   ›
-                                </button>
-                                >
-                                  ‹
                                 </button>
                                 <button
                                   type="button"
