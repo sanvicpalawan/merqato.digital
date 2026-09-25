@@ -117,10 +117,10 @@ export default function TeamWorkstation() {
   const isCloud = snapshot?.source === "cloud";
 
   return (
-    <div className="space-y-4 ws-desk">
+    <div className="space-y-4 ws-desk font-[var(--font-body)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-sm font-bold brand-heading lg:text-xl">Team Workstation</h3>
+          <h3 className="text-sm font-bold brand-heading lg:text-xl font-[family-name:var(--font-heading)]">Team Workstation</h3>
           <p className="brand-copy text-[11px] leading-relaxed mt-0.5 lg:text-sm lg:mt-1">
             Subjects for the team to study — projects, GitHub, Vercel, anything worth learning
             together.
