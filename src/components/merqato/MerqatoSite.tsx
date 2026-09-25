@@ -4529,7 +4529,7 @@ function PortfolioEditor({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs font-bold brand-heading truncate">{project.title}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full border bg-slate-50 dark:bg-white/5 brand-copy uppercase">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full border ${project.status === "live" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : project.status === "development" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" : "bg-slate-50 dark:bg-white/5 brand-copy"} uppercase">
                         {PORTFOLIO_STATUS_LABEL[project.status]}
                       </span>
                       {project.featured && (
@@ -4703,12 +4703,35 @@ function PortfolioEditor({
                                   }}
                                   className="w-7 h-7 rounded-md bg-slate-100 dark:bg-white/10 flex items-center justify-center cursor-pointer"
                                   title="Move left"
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (mIdx < project.media.length - 1) {
+                                      updatePortfolio((p) => ({
+                                        ...p,
+                                        items: p.items.map((it) => {
+                                          if (it.id !== project.id) return it;
+                                          const arr = [...it.media];
+                                          const tmp = arr[mIdx + 1];
+                                          arr[mIdx + 1] = arr[mIdx];
+                                          arr[mIdx] = tmp;
+                                          return { ...it, media: arr };
+                                        }),
+                                      }));
+                                    }
+                                  }}
+                                  className="w-7 h-7 rounded-md bg-slate-100 dark:bg-white/10 flex items-center justify-center cursor-pointer"
+                                  title="Move right"
+                                >
+                                  ›
+                                </button>
                                 >
                                   ‹
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => {
+                                    if (!confirm("Remove this media?")) return;
                                     onRemoveAsset(m.assetId);
                                     updatePortfolio((p) => ({
                                       ...p,
