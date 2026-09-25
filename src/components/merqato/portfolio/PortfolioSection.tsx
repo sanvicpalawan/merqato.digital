@@ -314,7 +314,7 @@ export default function PortfolioSection({ portfolio }: { portfolio: PortfolioSe
         <header className="portfolio-header">
           <div className="portfolio-heading-block">
             <span className="portfolio-eyebrow">{portfolio.eyebrow}</span>
-            <h2>{portfolio.title}</h2>
+            <h2 className={headingFont ? headingFont : undefined}>{portfolio.title}</h2>
             {portfolio.subtitle && <p>{portfolio.subtitle}</p>}
           </div>
           <div className="portfolio-tools" aria-label="Portfolio filters">
