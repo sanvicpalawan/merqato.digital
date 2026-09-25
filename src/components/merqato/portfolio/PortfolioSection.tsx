@@ -285,7 +285,7 @@ function ProjectCard({
   );
 }
 
-export default function PortfolioSection({ portfolio }: { portfolio: PortfolioSettings; headingFont: string }) {
+export default function PortfolioSection({ portfolio, headingFont }: { portfolio: PortfolioSettings; headingFont: string }) {
   const [statusFilter, setStatusFilter] = useState<"all" | PortfolioStatus>("all");
   const [tagFilter, setTagFilter] = useState("all");
   const [query, setQuery] = useState("");
